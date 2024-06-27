@@ -1,13 +1,16 @@
 window.addEventListener("load", () => {
+  console.log('contentJs called')
   setTimeout(() => {
-    let usernameField = document.querySelector('input[name="username"]');
-    let passwordField = document.querySelector('input[name="password"]');
+    let usernameField = document.querySelector(
+      'input[name="scramble_username"]'
+    );
+    let passwordField = document.querySelector(
+      'input[name="scramble_password"]'
+    );
     if (usernameField && passwordField) {
       usernameField.value = "xxxxzzz";
       passwordField.value = "yyyy";
-      console.log("fields are filled");
-      const allWindows = chrome.windows.getAll();
-      console.log(allWindows)
+      chrome.runtime.sendMessage({ message: "fieldsFilled" });
     }
-  }, 1500);
+  }, 2000);
 });
