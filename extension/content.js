@@ -1,5 +1,4 @@
 window.addEventListener("load", () => {
-  console.log('contentJs called')
   setTimeout(() => {
     let usernameField = document.querySelector(
       'input[name="scramble_username"]'
@@ -8,9 +7,10 @@ window.addEventListener("load", () => {
       'input[name="scramble_password"]'
     );
     if (usernameField && passwordField) {
-      usernameField.value = "xxxxzzz";
-      passwordField.value = "yyyy";
+      usernameField.value = "filled by extension";
+      passwordField.value = "filledByExtension";
       chrome.runtime.sendMessage({ message: "fieldsFilled" });
+      console.log("message passed from contentJs");
     }
   }, 2000);
 });

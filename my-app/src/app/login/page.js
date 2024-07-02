@@ -15,6 +15,7 @@ const Login = () => {
           id="password"
           placeholder="Password"
           name="scramble_password"
+          type="password"
         />
         <button
           className="bg-gray-500 rounded-xl p-2 w-1/2 m-auto"

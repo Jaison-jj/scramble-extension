@@ -1,9 +1,13 @@
 
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     if (changeInfo.status === 'complete') {
       console.log("background.js running...");
       if (tab.url && tab.url.includes("login")) {
-        chrome.windows.getAll({ populate: true }, function (windows) {
+        let queryOptions = { active: true, lastFocusedWindow: true };
+        let [tab] = await chrome.tabs.query(queryOptions);
+
+
+        await chrome.windows.getAll({ populate: true }, function (windows) {
           let popupFound = false;
           for (let window of windows) {
             if (window.type === "popup") { // Check for existing popups
@@ -15,21 +19,21 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
             chrome.windows.create({
               url: "popup.html",
               type: "popup",
-              width: 400,
-              height: 300
+              width: tab.width,
+              height: tab.height-100,
+              top:300
             },(window)=>{
-                debugger
-                chrome.scripting.executeScript({ // Inject content.js on popup creation
-                    target: { tabId: window.tabs[0].id }, // Target the first tab in the popup window
-                    files: ['content.js']
-                  });
+                // chrome.windows.update(window.id, {
+                //   width: 'screen.availWidth',
+                //   height: 'screen.availHeight'
+                // });
             })
           }
         });
       }
     }
   });
-  
+
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log('fieldsFilled event called')
