@@ -12,5 +12,5 @@ window.addEventListener("load", () => {
       chrome.runtime.sendMessage({ message: "fieldsFilled" });
       console.log("message passed from contentJs");
     }
-  }, 2000);
+  }, 4000);
 });

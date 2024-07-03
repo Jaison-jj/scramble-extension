@@ -7,60 +7,9 @@
     <link rel="stylesheet" href="index.css" />
   </head>
   <body>
-    <fieldset>
-      <legend><h3>QR Parameters</h3></legend>
-      <label style="margin-left: 40px">QR text</label>
-      <input
-        id="qrtext"
-        type="text"
-        value="https://app.uat.scrambleid.com/qr?id=dem:d605037c-6e4a-421d-85b0-fc9363415068"
-        style="width: 80%; color: blue"
-      /><br />
-      <!-- <label style="margin-left:40px">QR text</label> <input id="qrtext" type="text" value='"qid":"9e07dc2a-fa13-49c6-b2cb-1bfa19fb4642"' style="width:80%;color:blue" /><br> -->
-      <label style="margin-left: 40px">QR size</label>
-      <input
-        type="number"
-        id="qrsize"
-        value="200"
-        maxlength="3"
-        min="0"
-        max="600"
-      />
-      <br />
-      <label style="margin-left: 40px">QR dot edge gap (0 - 24)</label>
-      <input type="number" id="edgeGap" value="7" min="0" max="24" /> (0 for no
-      gap between dots in qrcode and 24 for max gap) <br />
-      <label style="margin-left: 40px"
-        >QR detection pattern corner radius (0 - 100)</label
-      >
-      <input type="number" id="cornerRadius" value="40" min="0" max="100" /> (0
-      for square and 100 for round) <br />
-      <br />
-      <label style="margin-left: 40px">Dark Color</label>
-      <input type="color" id="qrDark" value="#2e2e3a" />
-      <label style="margin-left: 40px">Light Color</label>
-      <input type="color" id="qrLight" value="#FFFFFF" />
-      <label style="margin-left: 40px">Border Color</label>
-      <input type="color" id="borderColor" value="#ffd000" />
-      <label style="margin-left: 40px">Background Color</label>
-      <input type="color" id="bgColor" value="#363642" />
-      <br />
-      <fieldset class="fieldset-auto-width">
-        <label>Border type: </label>
-        <input
-          type="radio"
-          id="static"
-          name="borderType"
-          value="static"
-          checked
-        />
-        <label for="huey">static</label>
-        <input type="radio" id="timer" name="borderType" value="timer" />
-        <label for="dewey">timer</label>
-      </fieldset>
-    </fieldset>
+    
     <div style="margin: 10px; margin-left: 40px">
-      <input type="button" value="Generate QR Code" onclick="makeCode()" />
+      <!-- <input type="button" value="Generate QR Code" onclick="makeCode()" /> -->
     </div>
     <!-- <div id="qrcode"></div> -->
     <div id="container">
@@ -69,6 +18,7 @@
         style="position: relative; left: 50px; top: 50px"
       ></div>
     </div>
+    <script src=""></script>
     <script src="index.js"></script>
   </body>
 </html>

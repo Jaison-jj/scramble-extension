@@ -1,13 +1,24 @@
 <!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <link rel="stylesheet" href="popup.css">
-    <script type="module" src="popup.js"></script>
-</head>
-<body>
-    <strong>Scan QR to login</strong>
-    <img id="qr-code-image" src="images/qr.png" alt="QR Code" width="150" height="150">
-</body>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QrCODE</title>
+    <link rel="stylesheet" href="index.css" />
+  </head>
+  <body>
+    
+    <div style="margin: 10px; margin-left: 40px">
+      <input type="button" value="Generate QR Code" onclick="makeCode()" />
+    </div>
+    <!-- <div id="qrcode"></div> -->
+    <div id="container">
+      <div
+        id="dv_canvas"
+        style="position: relative; left: 50px; top: 50px"
+      ></div>
+    </div>
+    <script src="qrcode.min.js" async></script>
+    <script src="index.js"></script>
+  </body>
 </html>
-
