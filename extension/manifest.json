@@ -23,5 +23,8 @@
       "resources": ["qrcode.min.js"],
       "matches": ["<all_urls>"]
     }
-  ]
+  ],
+  "content_security_policy": {
+  "extension_pages": "script-src 'self'" 
+}
 }

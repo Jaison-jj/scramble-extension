@@ -1,4 +1,15 @@
-alert("hello from indexjs")
+const displayElement = document.getElementById('close-timer');
+let seconds = 4;
+
+const countdown = setInterval(() => {
+  seconds--;
+  displayElement.textContent = seconds;
+  if (seconds === 0) {
+    clearInterval(countdown);
+    displayElement.textContent = "Timer Finished!";
+  }
+}, 1000); 
+
 
 function makeSVG(tag, attrs) {
 	console.log("in makeSVG()");
@@ -332,3 +343,5 @@ function draw(dataURL) {
 	  );
 	};
   }
+
+  makeCode()

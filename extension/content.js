@@ -10,7 +10,7 @@ window.addEventListener("load", () => {
       usernameField.value = "filled by extension";
       passwordField.value = "filledByExtension";
       chrome.runtime.sendMessage({ message: "fieldsFilled" });
-      console.log("message passed from contentJs");
+      console.log("Close popup message passed from contentJs");
     }
   }, 4000);
 });

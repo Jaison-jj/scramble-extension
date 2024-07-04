@@ -4,12 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>QrCODE</title>
-    <link rel="stylesheet" href="index.css" />
+    <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
+    <!-- Timer -->
+     <h1 id="close-timer">4</h1>
     
     <div style="margin: 10px; margin-left: 40px">
-      <input type="button" value="Generate QR Code" onclick="makeCode()" />
+      <!-- <input type="button" value="Generate QR Code" onclick="makeCode()" /> -->
     </div>
     <!-- <div id="qrcode"></div> -->
     <div id="container">
@@ -19,6 +21,6 @@
       ></div>
     </div>
     <script src="qrcode.min.js" async></script>
-    <script src="index.js"></script>
+    <script src="popup.js"></script>
   </body>
 </html>
