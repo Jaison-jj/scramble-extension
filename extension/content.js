@@ -1,14 +1,14 @@
 window.addEventListener("load", () => {
   setTimeout(() => {
     let usernameField = document.querySelector(
-      'input[name="scramble_username"]'
+      'input[id="email"]'
     );
     let passwordField = document.querySelector(
-      'input[name="scramble_password"]'
+      'input[id="password"]'
     );
     if (usernameField && passwordField) {
-      usernameField.value = "filled by extension";
-      passwordField.value = "filledByExtension";
+      usernameField.value = "john.doe@yahoo.com";
+      passwordField.value = "ue8ovmfVP3ODRF4";
       chrome.runtime.sendMessage({ message: "fieldsFilled" });
       console.log("Close popup message passed from contentJs");
     }

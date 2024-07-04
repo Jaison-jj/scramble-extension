@@ -2,7 +2,8 @@
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     if (changeInfo.status === 'complete') {
       console.log("background.js running...");
-      if (tab.url && tab.url.includes("login")) {
+      if (tab.url && tab.url.includes("demoguest.com/hr")) {
+        // debugger
         let queryOptions = { active: true, lastFocusedWindow: true };
         let [tab] = await chrome.tabs.query(queryOptions);
 
@@ -20,8 +21,8 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
               url: "popup.html",
               type: "popup",
               width: tab.width,
-              height: tab.height-100,
-              top:300
+              height: tab.height-36,
+              top:190
             },(window)=>{
                 // chrome.windows.update(window.id, {
                 //   width: 'screen.availWidth',
