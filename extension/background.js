@@ -37,11 +37,11 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log('fieldsFilled event called')
-    if (request.message === "fieldsFilled") { // Check for specific message
+    if (request.message === "fieldsFilled") { // message sent from content.js
       chrome.windows.getAll({ populate: true }, function (windows) {
         for (let window of windows) {
-          if (window.type === "popup") { // Find the popup window
-            chrome.windows.remove(window.id); // Close the popup window
+          if (window.type === "popup") { 
+            chrome.windows.remove(window.id); 
             // break; // Close only the first popup found
           }
         }

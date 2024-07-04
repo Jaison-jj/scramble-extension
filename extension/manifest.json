@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "My Chrome Extension",
+  "name": "Scramble Chrome Extension",
   "version": "1.0",
-  "description": "A basic Chrome extension example",
+  "description": "Authentication without password",
   "background": {
     "service_worker": "background.js"
   },
