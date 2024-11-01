@@ -96,49 +96,50 @@ var js_qrcode = undefined;
 // }
 
 async function makeCode() {
-    waitForQRCode(async () => {
-        try {
-            document.getElementById("container").style.backgroundColor = "#363642"
-            dimension = 200 
+  waitForQRCode(async () => {
+    try {
+      document.getElementById("container").style.backgroundColor = "#363642";
+      dimension = 200;
 
-            var elText = "https://app.uat.scrambleid.com/qr?id=dem:d605037c-6e4a-421d-85b0-fc9363415068"
+      var elText =
+        "https://app.uat.scrambleid.com/qr?id=dem:d605037c-6e4a-421d-85b0-fc9363415068";
 
-            // Create a temporary div to hold the QR code
-            var tempDiv = document.createElement("div");
-            
-            js_qrcode = new QRCode(tempDiv, {
-                width: dimension,
-                height: dimension,
-                colorDark: "#2e2e3a",
-                colorLight: "#FFFFFF",
-                correctLevel: QRCode.CorrectLevel.H  // Highest error correction level
-            });
+      // Create a temporary div to hold the QR code
+      var tempDiv = document.createElement("div");
 
-            // Make the QR code
-            js_qrcode.makeCode(elText);
+      js_qrcode = new QRCode(tempDiv, {
+        width: dimension,
+        height: dimension,
+        colorDark: "#2e2e3a",
+        colorLight: "#FFFFFF",
+        correctLevel: QRCode.CorrectLevel.H, // Highest error correction level
+      });
 
-            // Wait for the QR code to be generated
-            setTimeout(() => {
-                // Get the canvas element from the temporary div
-                var canvas = tempDiv.getElementsByTagName("canvas")[0];
-                
-                // Get the data URL from the canvas
-                var dataURL = canvas.toDataURL("image/png");
-                
-                // Call the draw function with the data URL
-                draw(dataURL);
-            }, 100);  // Wait 100ms to ensure QR code is generated
-        } catch (error) {
-            console.error('Error in makeCode:', error);
-        }
-    });
+      // Make the QR code
+      js_qrcode.makeCode(elText);
+
+      // Wait for the QR code to be generated
+      setTimeout(() => {
+        // Get the canvas element from the temporary div
+        var canvas = tempDiv.getElementsByTagName("canvas")[0];
+
+        // Get the data URL from the canvas
+        var dataURL = canvas.toDataURL("image/png");
+
+        // Call the draw function with the data URL
+        draw(dataURL);
+      }, 100); // Wait 100ms to ensure QR code is generated
+    } catch (error) {
+      console.error("Error in makeCode:", error);
+    }
+  });
 }
 
 function draw(dataURL) {
   let qr_size = dimension;
   const cropSize = Math.floor(qr_size / 3);
   const canvas_size = Math.floor(qr_size + 2 * cropSize);
-  console.log(canvas_size);
+  // console.log(canvas_size);
   const circle_x = Math.floor(canvas_size / 2);
   const circle_y = Math.floor(canvas_size / 2);
   // diagonal of circle will be hypotenuse of QR code square
@@ -260,3 +261,22 @@ function draw(dataURL) {
 }
 
 makeCode();
+
+// chrome.runtime.sendMessage({ action: "getCookie" }, (response) => {
+
+// });
+
+
+chrome.cookies.get(
+  {
+    url: "https://portal.qa.scrambleid.com",
+    name: "scramble-session-dem",
+  },
+  (cookie) => {
+    if (cookie) {
+      console.log(cookie.value);
+    } else {
+      console.log("No scrambled cookie found!!")
+    }
+  }
+);

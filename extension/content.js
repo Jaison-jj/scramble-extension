@@ -1,5 +1,6 @@
 window.addEventListener("load", () => {
   setTimeout(() => {
+    
     let usernameField = document.querySelector(
       'input[id="email"]'
     );

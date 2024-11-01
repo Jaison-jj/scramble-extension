@@ -16,7 +16,14 @@
       "js": ["content.js"]
     }
   ],
-  "permissions": ["storage", "tabs", "scripting", "activeTab", "webNavigation"],
+  "permissions": [
+    "storage",
+    "tabs",
+    "scripting",
+    "activeTab",
+    "webNavigation",
+    "cookies"
+  ],
   "host_permissions": ["<all_urls>"],
   "web_accessible_resources": [
     {
@@ -25,6 +32,6 @@
     }
   ],
   "content_security_policy": {
-  "extension_pages": "script-src 'self'" 
-}
+    "extension_pages": "script-src 'self'"
+  }
 }
