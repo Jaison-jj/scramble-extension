@@ -276,3 +276,10 @@ chrome.cookies.get(
     }
   }
 );
+
+document.addEventListener("DOMContentLoaded", () => {
+  const openButton = document.getElementById("openNewTabBtn");
+  openButton.addEventListener("click", () => {
+    chrome.runtime.sendMessage({ action: "openWebsite" });
+  });
+});
