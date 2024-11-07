@@ -262,10 +262,6 @@ function draw(dataURL) {
 
 makeCode();
 
-// chrome.runtime.sendMessage({ action: "getCookie" }, (response) => {
-
-// });
-
 
 chrome.cookies.get(
   {
