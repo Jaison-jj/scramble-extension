@@ -79,9 +79,9 @@ function updateIconBasedOnCookie() {
     { url: "https://portal.qa.scrambleid.com", name: "scramble-session-dem" },
     (cookie) => {
       if (cookie) {
-        console.log(cookie);
+        // console.log(cookie);
         chrome.action.setIcon({ path: ICON_WITH_COOKIE });
-        // getCredentials()
+        getDemoCredentials()
       } else {
         console.log("No cookie found. Setting default icon.");
         chrome.action.setIcon({ path: ICON_NO_COOKIE });
@@ -93,8 +93,8 @@ function updateIconBasedOnCookie() {
 updateIconBasedOnCookie();
 
 //optional
-chrome.tabs.onUpdated.addListener(updateIconBasedOnCookie);
-chrome.action.onClicked.addListener(updateIconBasedOnCookie);
+// chrome.tabs.onUpdated.addListener(updateIconBasedOnCookie);
+// chrome.action.onClicked.addListener(updateIconBasedOnCookie);
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "openWebsite") {
@@ -102,7 +102,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
-function getCredentials() {
+function getDemoCredentials() {
   chrome.cookies.getAll(
     { url: "https://portal.qa.scrambleid.com" },
     (cookies) => {
@@ -112,11 +112,12 @@ function getCredentials() {
       });
 
       // API CALL
-      fetch("https://qa.scrambleid.com/api/v1/lid/login/ZGVtfHxsZGFwYXBwMQ", {
+      fetch("https://qa.scrambleid.com/api/v1/lid/start-session/ZGVtfHxsZGFwYXBwMQ", {
         method: "post",
-        headers: {
-          Cookie: "cookieString",
-        },
+        // headers: {
+        //   Authorization: cookieString,
+        // },
+        credentials:"include"
       })
         .then((response) => response.json())
         .then((data) => {
