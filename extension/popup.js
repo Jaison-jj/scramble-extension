@@ -262,7 +262,6 @@ function draw(dataURL) {
 
 makeCode();
 
-
 chrome.cookies.get(
   {
     url: "https://portal.qa.scrambleid.com",
@@ -271,15 +270,20 @@ chrome.cookies.get(
   (cookie) => {
     if (cookie) {
       console.log(cookie.value);
+      /**
+       * if  cookie then hide the button
+       * call the api and populate the fields
+       */
+      const openButton = document.getElementById("openNewTabBtn");
+      openButton.remove();
     } else {
-      console.log("No scrambled cookie found!!")
+      document.addEventListener("DOMContentLoaded", () => {
+        const openButton = document.getElementById("openNewTabBtn");
+        openButton.addEventListener("click", () => {
+          chrome.runtime.sendMessage({ action: "openWebsite" });
+        });
+      });
+      console.log("No scrambled cookie found!!");
     }
   }
 );
-
-document.addEventListener("DOMContentLoaded", () => {
-  const openButton = document.getElementById("openNewTabBtn");
-  openButton.addEventListener("click", () => {
-    chrome.runtime.sendMessage({ action: "openWebsite" });
-  });
-});
