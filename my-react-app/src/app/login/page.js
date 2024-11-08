@@ -8,16 +8,17 @@ const Login = () => {
           className="border border-gray-500 rounded-lg p-2 bg-gray-800"
           id="username"
           placeholder="Username"
-          name="username"
+          name="scramble_username"
         />
         <input
           className="border border-gray-500 rounded-lg p-2 bg-gray-800"
           id="password"
           placeholder="Password"
-          name="password"
+          name="scramble_password"
+          type="password"
         />
         <button
-          className="bg-gray-500 rounded-xl p-2 w-1/2 m-auto"
+          className="bg-yellow-500 rounded-xl p-2 w-1/2 m-auto"
           type="submit"
         >
           Submit
