@@ -10,24 +10,15 @@
     <!-- Timer -->
      <header class="header">
         <img src="images/scrambleLogo.svg" alt="logo">
-        <h2>Scan Code</h2>
      </header>
 
-     <button id="openNewTabBtn">No cookie found! Login-></button>
+     <button id="openNewTabBtn">Login</button>
+
+     <img src="images/eggLoader.gif" alt="egg-loader" id="loader">
+     <p id="error-message"></p>
      
-     <h1 id="close-timer">4</h1>
     
-    <div style="margin: 10px; margin-left: 40px">
-      <!-- <input type="button" value="Generate QR Code" onclick="makeCode()" /> -->
-    </div>
-    <!-- <div id="qrcode"></div> -->
-    <div id="container">
-      <div
-        id="dv_canvas"
-        style="position: relative; left: 50px; top: 50px"
-      ></div>
-    </div>
-    <script src="qrcode.min.js"></script>
+    <!-- <script src="qrcode.min.js"></script> -->
     <script src="popup.js"></script>
   </body>
 </html>

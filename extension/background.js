@@ -52,39 +52,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
-/**
- The extension can access cookies if the right permissions are set.
-the extension should have permission for cookies
-the extension should have host_permission of the site (this ensures extension can access cookies for specific domains)
-cookies marked with HttpOnly attribute extension and sites wont be able to read it
-cookies marked with SameSite=Strict attribute the extension wont be able to read it
-cookies marked with Secure attribute will be only accessible via HTTPS, so the extension should be running on a secure connection
-If the extension to catch cookies on incognito mode, "incognito": "spanning" permission is need to be set to the extension
- */
-
-//REQUIREMENT #2
-/**
- * If there is no cookie take the user to the site t login
- * if there is no cookie show red icon
- * when cookie is found show green icon
- * when clicked on the green icon call the api with the cookie
- * set the fields with the response
- */
-
-const ICON_WITH_COOKIE = "images/scrambleOnline16.png";
-const ICON_NO_COOKIE = "images/scrambleOffline16.png";
+const SCR_ONLINE = "images/scrambleOnline16.png";
+const SCR_OFFLINE = "images/scrambleOffline16.png";
 
 function updateIconBasedOnCookie() {
-  chrome.cookies.getAll(
+  chrome.cookies.get(
     { url: "https://portal.qa.scrambleid.com", name: "scramble-session-dem" },
     (cookie) => {
       if (cookie) {
-        // console.log(cookie);
-        chrome.action.setIcon({ path: ICON_WITH_COOKIE });
-        getDemoCredentials()
+        chrome.action.setIcon({ path: SCR_ONLINE });
+        getDemoCredentials();
       } else {
-        console.log("No cookie found. Setting default icon.");
-        chrome.action.setIcon({ path: ICON_NO_COOKIE });
+        chrome.action.setIcon({ path: SCR_OFFLINE });
       }
     }
   );
@@ -93,8 +72,8 @@ function updateIconBasedOnCookie() {
 updateIconBasedOnCookie();
 
 //optional
-// chrome.tabs.onUpdated.addListener(updateIconBasedOnCookie);
-// chrome.action.onClicked.addListener(updateIconBasedOnCookie);
+chrome.tabs.onUpdated.addListener(updateIconBasedOnCookie);
+chrome.action.onClicked.addListener(updateIconBasedOnCookie);
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "openWebsite") {
@@ -102,42 +81,106 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
-function getDemoCredentials() {
-  chrome.cookies.getAll(
-    { url: "https://portal.qa.scrambleid.com" },
-    (cookies) => {
-      let cookieString = "";
-      cookies.forEach((c) => {
-        cookieString += `${c?.name}=${c?.value}; `;
-      });
-
-      // API CALL
-      fetch("https://qa.scrambleid.com/api/v1/lid/start-session/ZGVtfHxsZGFwYXBwMQ", {
-        method: "post",
-        // headers: {
-        //   Authorization: cookieString,
-        // },
-        credentials:"include"
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          console.log("data ", data);
-          chrome.storage.sync.set({
-            username: data.username,
-            password: data.password,
-          });
-          return;
-          chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-            chrome.tabs.sendMessage(tabs[0].id, {
-              action: "autofill",
-              username: data.username,
-              password: data.password,
-            });
-          });
-        })
-        .catch((error) => {
-          console.error("Error fetching data:", error);
-        });
-    }
-  );
+async function getDemoCredentials() {
+  // await fetch(
+  //   "https://qa.scrambleid.com/api/v1/lid/start-session/ZGVtfHxsZGFwYXBwMQ",
+  //   {
+  //     method: "post",
+  //     credentials: "include",
+  //   }
+  // )
+  //   .then((response) => response.json())
+  //   .then((data) => {
+  //     // console.log("apiData ", data);
+  //     if (!data.user) return;
+  //     chrome.storage.sync.set({
+  //       username: data.user.username,
+  //       password: data.user.password,
+  //     });
+  //   })
+  //   .catch((error) => {
+  //     console.error("Error fetching data:", error);
+  //   });
 }
+
+async function detectDemoSiteAndSendMessage() {
+  let queryOptions = { active: true, lastFocusedWindow: true };
+  let [tab] = await chrome.tabs.query(queryOptions);
+  if (tab && tab.url === "https://demoguest.com/vdi") {
+    chrome.storage.sync.get(["username", "password"], (data) => {
+      // chrome.tabs.sendMessage(tab.id, { action: "autofillDemoCred" });
+    });
+  }
+  return tab;
+}
+
+chrome.tabs.onActivated.addListener(detectDemoSiteAndSendMessage);
+
+chrome.manifest = chrome.runtime.getManifest();
+
+// chrome.tabs.onActivated.addListener(() => {
+//   chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+//     const tab = tabs[0];
+//     if (tab && tab.url === "https://demoguest.com/vdi") {
+//       await chrome.scripting.executeScript({
+//         target: { tabId: tab.id },
+//         files: ["content.js"],
+//       });
+
+//       await chrome.tabs.sendMessage(tab.id, { greeting: "hello" });
+//     }
+//   });
+// });
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === "popupOpened") {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      const tab = tabs[0];
+      chrome.cookies.get(
+        {
+          url: "https://portal.qa.scrambleid.com",
+          name: "scramble-session-dem",
+        },
+        async (cookie) => {
+          if (cookie && tab && tab.url === "https://demoguest.com/vdi") {
+            await chrome.scripting.executeScript({
+              target: { tabId: tab.id },
+              files: ["content.js"],
+            });
+
+            chrome.runtime.sendMessage({ action: "show_loader" });
+            await fetch(
+              "https://qa.scrambleid.com/api/v1/lid/start-session/ZGVtfHxsZGFwYXBwMQ",
+              {
+                method: "post",
+                credentials: "include",
+              }
+            )
+              .then((response) => response.json())
+              .then(async (data) => {
+                await chrome.scripting.executeScript({
+                  target: { tabId: tab.id },
+                  files: ["content.js"],
+                });
+                await chrome.tabs.sendMessage(tab.id, {
+                  action: "retrieve-user",
+                  user: data.user,
+                });
+                chrome.runtime.sendMessage({ action: "hide_loader" });
+              })
+              .catch((error) => {
+                console.error("Error fetching data:", error);
+              });
+          } else {
+            await chrome.scripting.executeScript({
+              target: { tabId: tab.id },
+              files: ["content.js"],
+            });
+
+            chrome.runtime.sendMessage({ action: "show_error" });
+          }
+        }
+      );
+    });
+  }
+});
