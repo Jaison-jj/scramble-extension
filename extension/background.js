@@ -57,7 +57,7 @@ const SCR_OFFLINE = "images/scrambleOffline16.png";
 
 function updateIconBasedOnCookie() {
   chrome.cookies.get(
-    { url: "https://portal.qa.scrambleid.com", name: "scramble-session-dem" },
+    { url: "https://portal.dev.scrambleid.com", name: "scramble-session-dem" },
     (cookie) => {
       if (cookie) {
         chrome.action.setIcon({ path: SCR_ONLINE });
@@ -77,7 +77,7 @@ chrome.action.onClicked.addListener(updateIconBasedOnCookie);
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "openWebsite") {
-    chrome.tabs.create({ url: "https://portal.qa.scrambleid.com/dem" });
+    chrome.tabs.create({ url: "https://portal.dev.scrambleid.com/dem" });
   }
 });
 
@@ -139,54 +139,57 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
       if (!tab || tab.url !== "https://demoguest.com/vdi") {
         chrome.runtime.sendMessage({ action: "hide_loader" });
-        return
+        return;
       }
 
-        chrome.cookies.get(
-          {
-            url: "https://portal.qa.scrambleid.com",
-            name: "scramble-session-dem",
-          },
-          async (cookie) => {
-            if (cookie) {
-              await chrome.scripting.executeScript({
-                target: { tabId: tab.id },
-                files: ["content.js"],
-              });
+      chrome.cookies.get(
+        {
+          url: "https://portal.dev.scrambleid.com",
+          name: "scramble-session-dem",
+        },
+        async (cookie) => {
+          if (cookie) {
+            await chrome.scripting.executeScript({
+              target: { tabId: tab.id },
+              files: ["content.js"],
+            });
 
-              chrome.runtime.sendMessage({ action: "show_loader" });
-              await fetch(
-                "https://qa.scrambleid.com/api/v1/lid/start-session/ZGVtfHxsZGFwYXBwMQ",
-                {
-                  method: "post",
-                  credentials: "include",
-                }
-              )
-                .then((response) => response.json())
-                .then(async (data) => {
-                  await chrome.scripting.executeScript({
-                    target: { tabId: tab.id },
-                    files: ["content.js"],
-                  });
-                  await chrome.tabs.sendMessage(tab.id, {
-                    action: "retrieve-user",
-                    user: data.user,
-                  });
-                  chrome.runtime.sendMessage({ action: "hide_loader_and_close_popup" });
-                })
-                .catch((error) => {
-                  console.error("Error fetching data:", error);
+            chrome.runtime.sendMessage({ action: "show_loader" });
+            await fetch(
+              "https://dev.scrambleid.com/api/v1/lid/start-session/ZGVtfHxsZGFwYXBwMQ",
+              {
+                method: "post",
+                credentials: "include",
+              }
+            )
+              .then((response) => response.json())
+              .then(async (data) => {
+                await chrome.scripting.executeScript({
+                  target: { tabId: tab.id },
+                  files: ["content.js"],
                 });
-            } else {
-              await chrome.scripting.executeScript({
-                target: { tabId: tab.id },
-                files: ["content.js"],
+                await chrome.tabs.sendMessage(tab.id, {
+                  action: "retrieve-user",
+                  user: data.user,
+                  errorCode: data.errorCode,
+                  resultCode: data.resultCode,
+                });
+                await chrome.runtime.sendMessage({
+                  action: "hide_loader_and_close_popup",
+                });
+              })
+              .catch((error) => {
+                // console.error("Error fetching data:", error);
               });
-
-              chrome.runtime.sendMessage({ action: "show_error" });
-            }
+          } else {
+            await chrome.scripting.executeScript({
+              target: { tabId: tab.id },
+              files: ["content.js"],
+            });
+            chrome.runtime.sendMessage({ action: "show_error" });
           }
-        );
+        }
+      );
     });
   }
 });
