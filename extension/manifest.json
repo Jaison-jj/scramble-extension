@@ -9,13 +9,13 @@
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
-      "16": "images/scrambleOffline16.png"
+      "16": "images/scrambleDefault.png"
     }
   },
 
   "content_scripts": [
     {
-      "matches": ["https://demoguest.com/vdi"],
+      "matches": ["https://demoguest.com/qa/vdi"],
       "run_at": "document_end",
       "js": ["content.js"]
     }

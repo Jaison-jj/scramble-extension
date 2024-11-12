@@ -18,7 +18,14 @@ body {
 
 
 #openNewTabBtn{
-    margin-top: 50px;
+    margin-top: 20px;
+    background-color: #fed000;
+    padding: 10px 0;
+    width: 200px;
+    color: black;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
 }
 
 #loader{

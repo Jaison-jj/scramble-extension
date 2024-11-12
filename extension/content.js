@@ -22,7 +22,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     let passwordField = document.querySelector('input[id="password"]');
 
     if (!request.user) {
-      // debugger;
       return alert(
         `There is no user!! errorCode:${request.errorCode}, resultCode:${request.resultCode}`
       );
@@ -31,6 +30,5 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     passwordField.value = request.user.password;
   }
   if (request.action === "no-cookie") {
-    // alert("")
   }
 });

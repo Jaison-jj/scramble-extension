@@ -1,6 +1,6 @@
 chrome.cookies.get(
   {
-    url: "https://portal.dev.scrambleid.com",
+    url: "https://portal.qa.scrambleid.com",
     name: "scramble-session-dem",
   },
   (cookie) => {
@@ -30,7 +30,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     document.getElementById("loader").style.display = "block";
   } else if (request.action === "hide_loader_and_close_popup") {
     document.getElementById("loader").style.display = "none";
-    // window.close();
+    window.close();
   } else if (request.action === "show_error") {
     document.getElementById("error-message").textContent = request.message;
     document.getElementById("loader").style.display = "none";
@@ -39,5 +39,3 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     document.getElementById("loader").style.display = "none";
   }
 });
-
-//"<all_urls>"
