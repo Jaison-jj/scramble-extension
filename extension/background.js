@@ -1,6 +1,6 @@
 const cookieUrl = "https://portal.qa.scrambleid.com";
 const cookieName = "scramble-session-dem";
-const injectionPageUrl = "https://demoguest.com/vdi";
+const injectionPageUrl = "https://demoguest.com/qa/vdi";
 
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   console.log("background.js running...");
@@ -56,8 +56,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
-const SCR_ONLINE = "images/scrambleOnline16.png";
-const SCR_OFFLINE = "images/scrambleOffline16.png";
+const SCR_ONLINE = "assets/icons/online48.png";
+const SCR_OFFLINE = "assets/icons/offline48.png";
 
 function updateIconBasedOnCookie() {
   chrome.cookies.get(
@@ -96,7 +96,7 @@ async function detectDemoSiteAndSendMessage() {
   return tab;
 }
 
-chrome.tabs.onActivated.addListener(detectDemoSiteAndSendMessage);
+// chrome.tabs.onActivated.addListener(detectDemoSiteAndSendMessage);
 
 chrome.manifest = chrome.runtime.getManifest();
 
@@ -119,7 +119,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       const tab = tabs[0];
 
-      if (!tab || tab.url !== "https://demoguest.com/qa/vdi") {
+      if (!tab || tab.url !== injectionPageUrl) {
         chrome.runtime.sendMessage({ action: "hide_loader" });
         return;
       }

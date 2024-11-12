@@ -2,17 +2,23 @@
   "manifest_version": 3,
   "name": "Scramble Chrome Extension",
   "version": "1.0",
-  "description": "Authentication without password",
+  "description": "A new way of web authentication.",
   "background": {
     "service_worker": "background.js"
   },
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
-      "16": "images/scrambleDefault.png"
+      "16": "assets/icons/default16.png",
+      "48": "assets/icons/default48.png",
+      "128": "assets/icons/default128.png"
     }
   },
-
+  "icons": {
+    "16": "assets/icons/default16.png",
+    "48": "assets/icons/default48.png",
+    "128": "assets/icons/default128.png"
+  },
   "content_scripts": [
     {
       "matches": ["https://demoguest.com/qa/vdi"],
