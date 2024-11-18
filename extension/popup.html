@@ -8,16 +8,50 @@
   </head>
   <body>
     <!-- Timer -->
-     <header class="header">
-        <img src="assets/images/scramble.svg" alt="logo">
-     </header>
+    <header class="header">
+      <img src="assets/images/headerLogoWhite.png" alt="logo" />
+    </header>
 
-     <button id="openNewTabBtn">Login</button>
+    <button id="openNewTabBtn">Login</button>
 
-     <img src="assets/images/loader.gif" alt="loader" id="loader">
-     <p id="error-message"></p>
-     
-    
+    <div class="loader-container" id="loader">
+      <p class="loader-title">Your scrambleID is generating...</p>
+      <div class="custom-loader"></div>
+      <p id="error-message" class="error-message"></p>
+    </div>
+
+    <div class="creds-container" id="creds-container">
+      <p class="creds-info">
+        ScrambleID generated login ID for <span>“Democorp”</span>
+      </p>
+
+      <div class="field">
+        <label for="username">User ID</label>
+        <input
+          type="text"
+          name="username"
+          id="username"
+          class="inputfield"
+          disabled
+        />
+        <button id="copyUsernameBtn" class="copyIcon">
+          <img src="assets/icons/copy.svg" alt="copy"  />
+        </button>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input
+          name="password"
+          type="password"
+          id="password"
+          class="inputfield"
+          disabled
+        />
+        <button id="copyPasswordBtn" class="copyIcon">
+          <img src="assets/icons/copy.svg" alt="copy"/>
+        </button>
+      </div>
+    </div>
     <!-- <script src="qrcode.min.js"></script> -->
     <script src="popup.js"></script>
   </body>

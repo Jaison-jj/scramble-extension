@@ -42,7 +42,8 @@
       "resources": [
         "qrcode.min.js",
         "images/scrambleOnline16.png",
-        "images/scrambleOffline16.png"
+        "images/scrambleOffline16.png",
+        "fonts/*"
       ],
       "matches": ["<all_urls>"]
     }

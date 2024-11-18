@@ -1,37 +1,154 @@
+@font-face {
+  font-family: "Switzer";
+  src: url("fonts/Switzer-Variable.woff2") format("woff2"),
+    url("fonts/Switzer-Variable.woff") format("woff");
+}
+
 :root {
-    color-scheme: light dark;
+  color-scheme: light dark;
 }
 
 body {
-    /* width: 200px; */
-    padding: 10px;
-
-    font-family: system-ui;
-    text-align: center;
-    background-color: black;
-    /* margin: 0 auto; */
+  width: 340px !important;
+  /* height: 424px; */
+  font-family: "Switzer", sans-serif;
+  text-align: center;
+  /* background-color: black; */
 }
 
-@media (prefers-color-scheme: dark) {
-    /* Dark Mode styles go here. */
+.header {
+  margin-top: 24px;
+  margin-bottom: 16px;
 }
 
-
-#openNewTabBtn{
-    margin-top: 20px;
-    background-color: #fed000;
-    padding: 10px 0;
-    width: 200px;
-    color: black;
-    border: none;
-    font-weight: bold;
-    cursor: pointer;
+#openNewTabBtn {
+  padding: 10px 0;
+  /* margin-top: 20px; */
+  background-color: #fed000;
+  width: 200px;
+  color: black;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
 }
 
-#loader{
-    /* width: 50%;
-    height: 50%; */
-    display: block;
-    margin: auto;
-    padding: 20px 0;
+.loader-container {
+  display: flex;
+  height: 344px;
+  /* padding: 0px 64px; */
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-gap---xl, 32px);
+  flex-shrink: 0;
+  align-self: stretch;
+  border-radius: var(--space-8, 8px);
+  background: #1f1f1f;
+  backdrop-filter: blur(50px);
+}
+.loader-container .loader-title {
+  font-family: "Switzer";
+  color: #fff;
+  text-align: center;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 24px;
+}
+.custom-loader {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 8px solid;
+  border-color: #554500;
+  border-right-color: #fed000;
+  animation: s2 1s infinite linear;
+  /* margin: auto; */
+}
+@keyframes s2 {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+.creds-container {
+  background-color: #1f1f1f;
+  padding: 32px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  border-radius: 10px;
+}
+
+.creds-container p {
+  text-align: left;
+  font-size: 16px;
+  font-weight: lighter;
+  margin: 0;
+  margin-bottom: 20px;
+  line-height: 1.8rem;
+}
+
+.creds-container p span {
+  font-weight: 600;
+}
+
+.creds-container .field {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  position: relative;
+}
+
+.creds-container .field label {
+  font-size: 14px;
+  color: #737066;
+  font-weight: 400;
+  line-height: 14px;
+  margin-bottom: 8px;
+}
+
+.inputfield {
+  width: 90%;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(225, 224, 222, 0.1);
+  outline: none;
+  background-color: inherit;
+  cursor: text;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: "Switzer";
+  color: white;
+}
+
+.copyIcon {
+  position: absolute;
+  top: 38px;
+  right: 10px;
+  cursor: grab;
+  background-color: transparent;
+  border: none;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.copyIcon:active {
+  transform: scale(0.5); /* Slightly shrink the button */
+  background-color: rgba(0, 0, 0, 0.1); /* Add a subtle background effect */
+}
+
+@media (prefers-color-scheme: light) {
+  .creds-container,.loader-container {
+    background-color: #f5f5f5;
+  }
+  .inputfield {
+    border: 1px solid #e1e0de;
+    color: #000;
+  }
+  .copyIcon img {
+    filter: invert(0%) brightness(0%);
+  }
+  .custom-loader{
+    border-color: #fff1b5;
+  }
 }
