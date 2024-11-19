@@ -1,6 +1,9 @@
-const cookieUrl = "https://portal.qa.scrambleid.com";
-const cookieName = "scramble-session-dem";
-const injectionPageUrl = "https://demoguest.com/qa/vdi";
+import {
+  COOKIE_URL,
+  COOKIE_NAME,
+  INJECTION_PAGE_URL,
+  CRED_BASE_URL,
+} from "./config.js";
 
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   console.log("background.js running...");
@@ -42,7 +45,6 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 });
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  // console.log("fieldsFilled event called");
   if (request.message === "fieldsFilled") {
     // message sent from content.js
     chrome.windows.getAll({ populate: true }, function (windows) {
@@ -60,7 +62,7 @@ const SCR_ONLINE = "assets/icons/online48.png";
 const SCR_OFFLINE = "assets/icons/offline48.png";
 
 function updateIconBasedOnCookie() {
-  chrome.cookies.get({ url: cookieUrl, name: cookieName }, (cookie) => {
+  chrome.cookies.get({ url: COOKIE_URL, name: COOKIE_NAME }, (cookie) => {
     if (cookie) {
       chrome.action.setIcon({ path: SCR_ONLINE });
     } else {
@@ -77,20 +79,9 @@ chrome.action.onClicked.addListener(updateIconBasedOnCookie);
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "openWebsite") {
-    chrome.tabs.create({ url: `${cookieUrl}/dem` });
+    chrome.tabs.create({ url: `${COOKIE_URL}/dem` });
   }
 });
-
-async function detectDemoSiteAndSendMessage() {
-  let queryOptions = { active: true, lastFocusedWindow: true };
-  let [tab] = await chrome.tabs.query(queryOptions);
-  if (tab && tab.url === "https://demoguest.com/vdi") {
-    chrome.storage.sync.get(["username", "password"], (data) => {
-      // chrome.tabs.sendMessage(tab.id, { action: "autofillDemoCred" });
-    });
-  }
-  return tab;
-}
 
 chrome.manifest = chrome.runtime.getManifest();
 
@@ -105,7 +96,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "popupOpened") {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       const tab = tabs[0];
-      const hasCookie = false
+      const hasCookie = false;
 
       chrome.storage.local.get("scrambleUser", async (data) => {
         if (data.scrambleUser) {
@@ -116,16 +107,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           });
           return;
         } else {
-          
-          if (!tab || tab.url !== injectionPageUrl) {
+          if (!tab || tab.url !== INJECTION_PAGE_URL) {
             chrome.runtime.sendMessage({ action: "hide_loader" });
             return;
           }
 
           chrome.cookies.get(
             {
-              url: cookieUrl,
-              name: cookieName,
+              url: COOKIE_URL,
+              name: COOKIE_NAME,
             },
             async (cookie) => {
               if (cookie) {
@@ -133,7 +123,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 chrome.runtime.sendMessage({ action: "show_loader" });
 
                 await fetch(
-                  "https://qa.scrambleid.com/api/v1/lid/start-session/ZGVtfHxsZGFwYXBwMQ",
+                  `${CRED_BASE_URL}/api/v1/lid/start-session/ZGVtfHxsZGFwYXBwMQ`,
                   {
                     method: "post",
                     credentials: "include",
@@ -153,7 +143,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                       action: "hide_loader_fill_fields",
                       user: data.user,
                     });
-                    hasCookie = true
+                    hasCookie = true;
                   })
                   .catch((error) => {
                     // console.error("Error fetching data:", error);

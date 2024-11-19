@@ -4,7 +4,8 @@
   "version": "1.0",
   "description": "A new way of web authentication.",
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background.js",
+     "type": "module"
   },
   "action": {
     "default_popup": "popup.html",
@@ -23,7 +24,8 @@
     {
       "matches": ["https://demoguest.com/qa/vdi"],
       "run_at": "document_end",
-      "js": ["content.js"]
+      "js": ["content.js","config.js"],
+       "type": "module"
     }
   ],
   "permissions": [

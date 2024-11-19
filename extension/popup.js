@@ -1,3 +1,8 @@
+import {
+  COOKIE_URL,
+  COOKIE_NAME,
+} from "./config.js";
+
 document.addEventListener("DOMContentLoaded", () => {
   const openButton = document.getElementById("openNewTabBtn");
   if (openButton) {
@@ -89,8 +94,8 @@ document.addEventListener("DOMContentLoaded", () => {
 document.addEventListener("DOMContentLoaded", () => {
   chrome.cookies.get(
     {
-      url: "https://portal.qa.scrambleid.com",
-      name: "scramble-session-dem",
+      url: COOKIE_URL,
+      name: COOKIE_NAME,
     },
     (cookie) => {
       if (cookie) {
