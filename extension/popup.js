@@ -1,7 +1,7 @@
-import {
-  COOKIE_URL,
-  COOKIE_NAME,
-} from "./config.js";
+// import {
+//   COOKIE_URL,
+//   COOKIE_NAME,
+// } from "./config.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   const openButton = document.getElementById("openNewTabBtn");
@@ -87,15 +87,15 @@ document.addEventListener("DOMContentLoaded", () => {
   ).matches;
   if (isLightLightMode) {
     const headerImage = document.querySelector("header img");
-    headerImage.src = "assets/images/headerLogoBlack.png";
+    headerImage.src = "assets/images/headerLogoBlack.svg";
   }
 });
 
 document.addEventListener("DOMContentLoaded", () => {
   chrome.cookies.get(
     {
-      url: COOKIE_URL,
-      name: COOKIE_NAME,
+      url: 'https://portal.demo.scrambleid.com',
+      name: 'scramble-session-dem',
     },
     (cookie) => {
       if (cookie) {

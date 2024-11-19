@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Scramble Chrome Extension",
+  "name": "ScrambleID",
   "version": "1.0",
-  "description": "A new way of web authentication.",
+  "description": "Only you can be you.",
   "background": {
     "service_worker": "background.js",
      "type": "module"
@@ -45,7 +45,8 @@
         "qrcode.min.js",
         "images/scrambleOnline16.png",
         "images/scrambleOffline16.png",
-        "fonts/*"
+        "fonts/*",
+        "config.js"
       ],
       "matches": ["<all_urls>"]
     }
