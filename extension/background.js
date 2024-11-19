@@ -1,4 +1,4 @@
-const cookieUrl = "https://portal.dev.scrambleid.com";
+const cookieUrl = "https://portal.qa.scrambleid.com";
 const cookieName = "scramble-session-dem";
 const injectionPageUrl = "https://demoguest.com/qa/vdi";
 
@@ -42,7 +42,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 });
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  console.log("fieldsFilled event called");
+  // console.log("fieldsFilled event called");
   if (request.message === "fieldsFilled") {
     // message sent from content.js
     chrome.windows.getAll({ populate: true }, function (windows) {
@@ -78,15 +78,6 @@ chrome.action.onClicked.addListener(updateIconBasedOnCookie);
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "openWebsite") {
     chrome.tabs.create({ url: `${cookieUrl}/dem` });
-    //test setting cookie
-    // chrome.cookies.set({
-    //   url: "https://example.com",
-    //   name: "test_cookie",
-    //   value: "test_value",
-    //   expirationDate: Date.now() / 1000 + 60 * 60,
-    // }, (cookie) => {
-    //   console.log("Test cookie set:", cookie);
-    // });
   }
 });
 
@@ -114,17 +105,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "popupOpened") {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       const tab = tabs[0];
+      const hasCookie = false
 
       chrome.storage.local.get("scrambleUser", async (data) => {
         if (data.scrambleUser) {
           chrome.runtime.sendMessage({ action: "hide_loader" });
           await chrome.runtime.sendMessage({
-            action: "hide_loader_and_close_popup",
+            action: "hide_loader_fill_fields",
             user: data.scrambleUser,
           });
           return;
         } else {
-          chrome.runtime.sendMessage({action:"no-stored-credentials"})
           
           if (!tab || tab.url !== injectionPageUrl) {
             chrome.runtime.sendMessage({ action: "hide_loader" });
@@ -159,9 +150,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                       resultCode: data.resultCode,
                     });
                     await chrome.runtime.sendMessage({
-                      action: "hide_loader_and_close_popup",
+                      action: "hide_loader_fill_fields",
                       user: data.user,
                     });
+                    hasCookie = true
                   })
                   .catch((error) => {
                     // console.error("Error fetching data:", error);

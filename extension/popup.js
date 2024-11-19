@@ -1,29 +1,3 @@
-chrome.cookies.get(
-  {
-    url: "https://portal.qa.scrambleid.com",
-    name: "scramble-session-dem",
-  },
-  (cookie) => {
-    if (cookie) {
-      document.getElementById("openNewTabBtn").style.display = "none";
-      document.getElementById("creds-container").style.display = "none";
-    } else {
-      console.log("No scrambled cookie found!!");
-      chrome.storage.local.remove("scrambleUser", () => {
-        if (chrome.runtime.lastError) {
-          console.error(
-            "Error removing scrambleUser data:",
-            chrome.runtime.lastError
-          );
-        } else {
-          console.log("ScrambleUser data removed successfully");
-        }
-      });
-      document.getElementById("creds-container").style.display = "none";
-    }
-  }
-);
-
 document.addEventListener("DOMContentLoaded", () => {
   const openButton = document.getElementById("openNewTabBtn");
   if (openButton) {
@@ -41,7 +15,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "show_loader") {
     document.getElementById("loader").style.display = "flex";
     document.getElementById("creds-container").style.display = "none";
-  } else if (request.action === "hide_loader_and_close_popup") {
+  } else if (request.action === "hide_loader_fill_fields") {
     document.getElementById("loader").style.display = "none";
     document.getElementById("creds-container").style.display = "flex";
     const usernameField = document.getElementById("username");
@@ -56,11 +30,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     document.getElementById("error-message").textContent = request.message;
     document.getElementById("loader").style.display = "none";
   }
-
-  if(request.action === "no-stored-credentials"){
-    document.getElementById("creds-container").style.display = "none";
-  }
-  
 });
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -112,8 +81,34 @@ document.addEventListener("DOMContentLoaded", () => {
     "(prefers-color-scheme: light)"
   ).matches;
   if (isLightLightMode) {
-    //
     const headerImage = document.querySelector("header img");
     headerImage.src = "assets/images/headerLogoBlack.png";
   }
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  chrome.cookies.get(
+    {
+      url: "https://portal.qa.scrambleid.com",
+      name: "scramble-session-dem",
+    },
+    (cookie) => {
+      if (cookie) {
+        document.getElementById("openNewTabBtn").style.display = "none";
+        document.getElementById("creds-container").style.display = "none";
+      } else {
+        chrome.storage.local.remove("scrambleUser", () => {
+          if (chrome.runtime.lastError) {
+            console.error(
+              "Error removing scrambleUser data:",
+              chrome.runtime.lastError
+            );
+            document.getElementById("creds-container").style.display = "none";
+          } else {
+            document.getElementById("creds-container").style.display = "none";
+          }
+        });
+      }
+    }
+  );
 });

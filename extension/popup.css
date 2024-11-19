@@ -10,7 +10,7 @@
 
 body {
   width: 340px !important;
-  /* height: 424px; */
+  min-height: 384px;
   font-family: "Switzer", sans-serif;
   text-align: center;
   /* background-color: black; */
@@ -30,6 +30,7 @@ body {
   border: none;
   font-weight: bold;
   cursor: pointer;
+  transform: translate(2%, 319%);
 }
 
 .loader-container {
@@ -149,6 +150,10 @@ body {
     filter: invert(0%) brightness(0%);
   }
   .custom-loader{
-    border-color: #fff1b5;
+    border-color: #92885b;
+    border-right-color: #fed000;
+  }
+  .loader-container .loader-title{
+    color: black;
   }
 }
