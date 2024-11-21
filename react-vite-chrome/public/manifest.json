@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "ScrambleID",
+  "version": "1.0",
+  "action":{
+    "default_popup":"index.html"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "permissions": [
+    "storage",
+    "tabs",
+    "scripting",
+    "activeTab",
+    "webNavigation",
+    "cookies",
+    "bookmarks",
+    "contextMenus"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "run_at": "document_end",
+      "js": ["content.js"],
+       "type": "module"
+    }
+  ],
+  "host_permissions": ["<all_urls>"]
+}
