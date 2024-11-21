@@ -30,10 +30,18 @@ function App() {
 
     console.log(data);
   }
-
+  
   useEffect(() => {
-    getQidOrDid();
+    chrome.runtime.sendMessage({
+      action: 'your_action_name',
+      data: 'your_data'
+    });
   }, []);
+  
+
+  // useEffect(() => {
+  //   getQidOrDid();
+  // }, []);
 
   return (
     <>
