@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import "./App.css";
 import Header from "./components/Header";
+import QrCode from "./components/QrCode";
 
 function App() {
   async function getQidOrDid() {
@@ -38,6 +39,7 @@ function App() {
     <>
       <div className="w-[340px] min-h-[424px] bg-green-200">
         <Header />
+        <QrCode />
       </div>
     </>
   );
