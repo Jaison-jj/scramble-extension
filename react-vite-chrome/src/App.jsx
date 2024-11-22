@@ -4,44 +4,14 @@ import Header from "./components/Header";
 import QrCode from "./components/QrCode";
 
 function App() {
-  async function getQidOrDid() {
-    const res = await fetch(
-      "https://wsp2.dev.scrambleid.com/login/portal/ZGVtfHxkZW0tcG9ydGFs?format=json",
-      {
-        headers: {
-          accept: "*/*",
-          "accept-language": "en-US,en;q=0.9",
-          origin: "http://localhost:3100",
-          priority: "u=1, i",
-          referer: "http://localhost:3100/",
-          "sec-ch-ua":
-            '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
-          "sec-ch-ua-mobile": "?0",
-          "sec-ch-ua-platform": '"Windows"',
-          "sec-fetch-dest": "empty",
-          "sec-fetch-mode": "cors",
-          "sec-fetch-site": "cross-site",
-          "user-agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-        },
-      }
-    );
-    const data = await res.json()
-
-    console.log(data);
-  }
+ 
   
   useEffect(() => {
-    chrome.runtime.sendMessage({
-      action: 'your_action_name',
+    chrome?.runtime?.sendMessage({
+      action: 'get-qid-did',
       data: 'your_data'
     });
   }, []);
-  
-
-  // useEffect(() => {
-  //   getQidOrDid();
-  // }, []);
 
   return (
     <>
