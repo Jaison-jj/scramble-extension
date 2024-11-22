@@ -1,5 +1,3 @@
-console.log("hello from service worker");
-
 async function getQidOrDid() {
   const res = await fetch(
     "https://wsp2.dev.scrambleid.com/login/portal/ZGVtfHxkZW0tcG9ydGFs?format=json",
@@ -28,8 +26,18 @@ async function getQidOrDid() {
 
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
   if (request.action === "get-qid-did") {
-    console.log("Received message:", request.data);
-    const data = await getQidOrDid();
-    console.log(data);
+    console.log("Received message to sw:", request.data);
+    const authCodeData = await getQidOrDid();
+
+    const epochTime = Math.floor(Date.now() / 1000);
+    const wsUrl = `wss://wsp.qa.scrambleid.com/v1?action=PORTAL&qid=${authCodeData?.qid}&did=${authCodeData.did}&org=${authCodeData?.code}&epoch=${epochTime}&amznReqId=${authCodeData?.amznReqId}`;
+    const socket = new WebSocket(wsUrl)
+
+    
+
+    await chrome.runtime.sendMessage({
+      action: "transfer_auth_code",
+      data: authCodeData,
+    });
   }
 });
