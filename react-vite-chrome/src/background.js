@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 async function getQidOrDid() {
   const res = await fetch(
     "https://wsp2.dev.scrambleid.com/login/portal/ZGVtfHxkZW0tcG9ydGFs?format=json",
@@ -24,20 +25,54 @@ async function getQidOrDid() {
   return data;
 }
 
+const Step = {
+  INIT: 1,
+  GET_QID_DID: 2,
+  WS_CONNECT: 3,
+};
+
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
-  if (request.action === "get-qid-did") {
-    console.log("Received message to sw:", request.data);
+  if (request.action === "open_popup") {
+    chrome.storage.local.set({
+      Auth: {
+        step: Step.INIT,
+      },
+    });
+
     const authCodeData = await getQidOrDid();
 
-    const epochTime = Math.floor(Date.now() / 1000);
-    const wsUrl = `wss://wsp.qa.scrambleid.com/v1?action=PORTAL&qid=${authCodeData?.qid}&did=${authCodeData.did}&org=${authCodeData?.code}&epoch=${epochTime}&amznReqId=${authCodeData?.amznReqId}`;
-    const socket = new WebSocket(wsUrl)
+    chrome.storage.local.set({
+      Auth: {
+        data: authCodeData,
+      },
+    });
 
-    
+    // const epochTime = Math.floor(Date.now() / 1000);
+    // const wsUrl = `wss://wsp.qa.scrambleid.com/v1?action=PORTAL&qid=${authCodeData?.qid}&did=${authCodeData.did}&org=${authCodeData?.code}&epoch=${epochTime}&amznReqId=${authCodeData?.amznReqId}`;
+
+    await establishWsConnection();
+
+    const scrambleState = await chrome.storage.local.get("Auth");
 
     await chrome.runtime.sendMessage({
       action: "transfer_auth_code",
-      data: authCodeData,
+      scrambleState,
     });
   }
 });
+
+async function establishWsConnection() {
+  const socket = new WebSocket("wss://echo.websocket.events");
+
+  socket.addEventListener("open", () => {
+    socket.send("Hello! how are you");
+  });
+
+  socket.addEventListener("message", async (event) => {
+
+    await chrome.runtime.sendMessage({
+      action: "received_ws_message",
+      wsEvent:event.data
+    });
+  });
+}

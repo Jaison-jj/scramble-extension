@@ -1,18 +1,13 @@
-import React, { useState } from "react";
 import LogoBlack from "../../assets/icons/toggle.svg";
+import PropTypes from "prop-types";
 
-const ToggleButton = () => {
-  const [isOn, setIsOn] = useState(false);
-
-  const handleToggle = () => {
-    setIsOn((prev) => !prev);
-  };
+const ToggleButton = (props) => {
+  const {isOn, setIsOn} = props
 
   return (
-    <div
-      onClick={handleToggle}
+    <button
+      onClick={setIsOn}
       style={{
-        margin:"auto",
         width: "60px",
         height: "30px",
         borderRadius: "15px",
@@ -34,13 +29,19 @@ const ToggleButton = () => {
           borderRadius: "50%",
           backgroundColor: "#fff",
           position: "absolute",
-          top: "-2px",
+          top: "-px",
           left: isOn ? "32px" : "0px",
           transition: "left 0.3s ease",
         }}
       />
-    </div>
+    </button>
   );
 };
+
+ToggleButton.propTypes = {
+  isOn: PropTypes.bool,
+  setIsOn: PropTypes.func,
+};
+
 
 export default ToggleButton;

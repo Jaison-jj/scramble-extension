@@ -1,9 +1,11 @@
-import React, { useEffect, useState, useRef } from "react";
-import { clearInterval, setInterval } from 'worker-timers';
+import { useEffect, useState, useRef } from "react";
+import { clearInterval, setInterval } from "worker-timers";
+import PropTypes from "prop-types";
+import CopyCodeButton from "../CopyCode";
 
-const NewCircularLoader = ({ children }) => {
+const NewCircularLoader = ({ children, isShow }) => {
   const [progress, setProgress] = useState(100); // Starts full (100%)
-  const radius = 150; // Circle radius
+  const radius = 130; // Circle radius
   const strokeWidth = 6; // Stroke width
   const circumference = 2 * Math.PI * radius; // Circle circumference
   const timerRef = useRef(null);
@@ -30,64 +32,73 @@ const NewCircularLoader = ({ children }) => {
   const offset = circumference - (progress / 100) * circumference;
 
   return (
-    <div
-      style={{
-        position: "relative",
-        width: `${radius * 2 + strokeWidth * 2}px`,
-        height: `${radius * 2 + strokeWidth * 2}px`,
-        transform:"scale(-1, 1)",
-        margin:"auto"
-      }}
-    >
-      <svg
-        width={radius * 2 + strokeWidth * 2} 
-        height={radius * 2 + strokeWidth * 2}
-        viewBox={`0 0 ${radius * 2 + strokeWidth * 2} ${
-          radius * 2 + strokeWidth * 2
-        }`}
-      >
-        {/* Full red background */}
-        <circle
-          cx={radius + strokeWidth} 
-          cy={radius + strokeWidth} 
-          r={radius}
-          fill="transparent"
-          stroke="#FF0000" // Red
-          strokeWidth={strokeWidth-1}
-        />
-        {/* Yellow progress */}
-        <circle
-          cx={radius + strokeWidth} 
-          cy={radius + strokeWidth} 
-          r={radius}
-          fill="transparent"
-          stroke="#FFD700" // Yellow
-          strokeWidth={strokeWidth}
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          style={{
-            transform: "rotate(-90deg)",
-            transformOrigin: "center",
-            transition: "stroke-dashoffset 0.1s linear",
-          }}
-        />
-      </svg>
-
+    <div className="authBackground w-[95%] pt-[38px]  h-[408px] mx-auto rounded-md">
       <div
         style={{
-          position: "absolute",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          position: "relative",
+          width: `${radius * 2 + strokeWidth * 2}px`,
+          height: `${radius * 2 + strokeWidth * 2}px`,
+          transform: "scale(-1, 1)",
+          margin: "auto",
+          display: isShow ? "block" : "none",
         }}
       >
-        {children}
+        <svg
+          width={radius * 2 + strokeWidth * 2}
+          height={radius * 2 + strokeWidth * 2}
+          viewBox={`0 0 ${radius * 2 + strokeWidth * 2} ${
+            radius * 2 + strokeWidth * 2
+          }`}
+        >
+          {/* Full red background */}
+          <circle
+            cx={radius + strokeWidth}
+            cy={radius + strokeWidth}
+            r={radius}
+            fill="transparent"
+            stroke="#FF0000" // Red
+            strokeWidth={strokeWidth - 1}
+          />
+          {/* Yellow progress */}
+          <circle
+            cx={radius + strokeWidth}
+            cy={radius + strokeWidth}
+            r={radius}
+            fill="transparent"
+            stroke="#FFD700" // Yellow
+            strokeWidth={strokeWidth}
+            strokeDasharray={circumference}
+            strokeDashoffset={offset}
+            style={{
+              transform: "rotate(-90deg)",
+              transformOrigin: "center",
+              transition: "stroke-dashoffset 0.1s linear",
+            }}
+          />
+        </svg>
+
+        <div
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {children}
+          <CopyCodeButton className="absolute bottom-[-50px] left-[110px] -scale-x-100 scale-y-100" />
+        </div>
       </div>
     </div>
   );
+};
+
+NewCircularLoader.propTypes = {
+  children: PropTypes.any,
+  isShow: PropTypes.bool,
 };
 
 export default NewCircularLoader;

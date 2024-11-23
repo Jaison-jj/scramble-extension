@@ -1,14 +1,15 @@
-import React, { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { QrCodeGenerator } from "../utils/qr-code-generator";
+import PropTypes from "prop-types";
 
 const QrCode = ({
   value = "",
   parentId = "qr-container",
   qrId = "dv_canvas",
-  size = 200,
+  size = 170,
 }) => {
-  const [qrValue, setQrValue] = useState(value);
-  const [qrSize, setQrSize] = useState(size);
+  const [qrValue] = useState(value);
+  const [qrSize] = useState(size);
   const qrGeneratorRef = useRef(null);
 
   // Initialize QRCodeGenerator
@@ -49,6 +50,13 @@ const QrCode = ({
       </div>
     </section>
   );
+};
+
+QrCode.propTypes = {
+  value: PropTypes.string,
+  parentId: PropTypes.string,
+  qrId: PropTypes.string,
+  size: PropTypes.number,
 };
 
 export default QrCode;
