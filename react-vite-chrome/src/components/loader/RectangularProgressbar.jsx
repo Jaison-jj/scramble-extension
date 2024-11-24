@@ -66,7 +66,7 @@ const RectangularProgressbar = (props) => {
         {children}
       </button>
 
-      <CopyCodeButton className="absolute bottom-10 left-[110px]" />
+      <CopyCodeButton className="absolute bottom-[43px] left-[131px]" />
     </div>
   );
 };

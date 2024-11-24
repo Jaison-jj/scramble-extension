@@ -10,22 +10,24 @@ const TextInput = (props) => {
         type={type}
         placeholder="username"
         name={name}
-        className="rounded-2xl w-full border border-[#E1E0DE] h-[60px] p-4 bg-transparent outline-none"
+        className="rounded-2xl w-full border border-[#E1E0DE] h-[60px] p-4 bg-transparent outline-none text-lg font-medium text-[#151515]"
         value={value}
+        disabled
       />
 
-      <img src={CopyIcon} alt="" className="absolute top-[49px] right-[11px]" />
+      <button className="absolute top-[49px] right-[11px] active:scale-50 transition-transform duration-150">
+        <img src={CopyIcon} alt="copy" className="" />
+      </button>
     </div>
   );
 };
 
 TextInput.propTypes = {
-    type: PropTypes.string,
-    htmlFor: PropTypes.string,
-    name: PropTypes.string,
-    label: PropTypes.string,
-    value: PropTypes.string,
-
-  };
+  type: PropTypes.string,
+  htmlFor: PropTypes.string,
+  name: PropTypes.string,
+  label: PropTypes.string,
+  value: PropTypes.string,
+};
 
 export default TextInput;

@@ -6,7 +6,14 @@ const TypeCode = (props) => {
   return (
     <div className="bg-white w-[260px] h-[100px] flex items-center justify-center">
       <p className="text-[hsl(0,0%,8%)] text-center text-[33px] not-italic font-medium leading-9 tracking-[16px]">
-        {code}
+        {code.split("").map((char, index) => (
+          <span
+            key={index}
+            className={index === code.length - 1 ? "tracking-normal" : ""}
+          >
+            {char}
+          </span>
+        ))}
       </p>
     </div>
   );

@@ -12,7 +12,7 @@ const CopyCodeButton = (props) => {
         className
       )}
     >
-        <img src={CopyIcon} alt="copy" />
+        <img src={CopyIcon} alt="copy" className="mt-[3px]"/>
       <span className="text-base font-normal">Copy</span> 
     </button>
   );
