@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { clearInterval, setInterval } from "worker-timers";
 import PropTypes from "prop-types";
 import CopyCodeButton from "../CopyCode";
+import { cn } from "../../utils/cn";
 
 const NewCircularLoader = ({ children, isShow }) => {
   const [progress, setProgress] = useState(100); // Starts full (100%)
@@ -32,7 +33,14 @@ const NewCircularLoader = ({ children, isShow }) => {
   const offset = circumference - (progress / 100) * circumference;
 
   return (
-    <div className="authBackground w-[95%] pt-[38px]  h-[408px] mx-auto rounded-md">
+    <div
+      className={cn(
+        "authBackground w-[95%] pt-[38px]  h-[408px] mx-auto rounded-md",
+        {
+          hidden: !isShow,
+        }
+      )}
+    >
       <div
         style={{
           position: "relative",
@@ -40,7 +48,6 @@ const NewCircularLoader = ({ children, isShow }) => {
           height: `${radius * 2 + strokeWidth * 2}px`,
           transform: "scale(-1, 1)",
           margin: "auto",
-          display: isShow ? "block" : "none",
         }}
       >
         <svg

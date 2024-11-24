@@ -13,7 +13,7 @@ const CopyCodeButton = (props) => {
       )}
     >
         <img src={CopyIcon} alt="copy" />
-      <span className="text-base">Copy</span> 
+      <span className="text-base font-normal">Copy</span> 
     </button>
   );
 };

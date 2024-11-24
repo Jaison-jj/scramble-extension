@@ -5,11 +5,14 @@ import Header from "./components/Header";
 import QrCode from "./components/QrCode";
 import NewCircularLoader from "./components/loader/NewCircularLoader";
 import Footer from "./components/Footer";
-import RectangularProgressBar from "./components/loader/RectangualrPregressBar";
+import RectangularProgressbar from "./components/loader/RectangularProgressbar";
+import TypeCode from "./components/TypeCode";
+// import Credentials from "./components/Credentials";
+import Loader from "./components/Loader";
 
 function App() {
   const [codeData, setCodeData] = useState(null);
-  const [codeType, setCodeType] = useState("qrCode");
+  const [codeType, setCodeType] = useState("qrCoder");
 
   useEffect(() => {
     chrome?.runtime?.sendMessage({
@@ -35,17 +38,21 @@ function App() {
 
   return (
     <>
-      <div className="w-[340px] min-h-[424px] bg-green-300">
+      <div className="w-[340px] min-h-[424px] bg-violet-300">
         <Header />
-        {/* <NewCircularLoader isShow={true}>
+        <NewCircularLoader isShow={codeType === "qrCode"}>
           <QrCode
             value={`https://app.qa.scrambleid.com/qr?id=${codeData?.code}:${codeData?.qid}`}
           />
-        </NewCircularLoader> */}
+        </NewCircularLoader>
 
-        <RectangularProgressBar isShow={true}>
-          <div style={{ color: "#000", fontWeight: "bold" }}>Loading...</div>
-        </RectangularProgressBar>
+        <RectangularProgressbar isShow={codeType === "typeCode"}>
+          <TypeCode />
+        </RectangularProgressbar>
+
+        <Loader/>
+        {/* <Credentials /> */}
+
         <Footer codeType={codeType} setCodeType={setCodeType} />
       </div>
     </>

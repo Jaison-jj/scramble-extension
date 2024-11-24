@@ -1,9 +1,72 @@
+@font-face {
+  font-family: 'switzer';
+  src: url('./assets/fonts/Switzer-Variable.ttf') format('truetype');
+}
+
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 .authBackground {
-    @apply  backdrop-blur-[50px];
-    background: #f5f5f5
+  @apply backdrop-blur-[50px];
+  background: #f5f5f5;
+}
+
+.typeCode {
+  position: absolute;
+  top: 39.5%;
+  left: 50.2%;
+  transform: translate(-50%, -50%);
+}
+
+@keyframes spin {
+  to {
+    stroke-dashoffset: -400;
   }
-  
+}
+
+.rectProgressSvg {
+  display: block;
+  margin: 0 auto; /* Center horizontally */
+  max-width: 100%; /* Prevent it from overflowing */
+  height: auto; /* Maintain aspect ratio */
+}
+
+.rectProgressSvg rect {
+  width: 104.7px;
+  height: 42.5px; 
+  x: 10px;
+  y: 10px; 
+  fill: none;
+  stroke-width: 2;
+
+  /* ################### */
+  stroke-linecap: square;
+  stroke-dashoffset: calc((1 - var(--progress)) * (-400));
+  animation: spin var(--speed) infinite linear;
+}
+
+.rectProgressSvg .bgRect {
+  stroke-dasharray: none;
+  stroke-dashoffset: 0;
+  animation: none;
+}
+
+.animate-rotate {
+  animation: animName 1s linear infinite;
+
+}
+
+
+@keyframes animName {
+  0%{
+     transform: rotate(0deg);
+    }
+ 100%{
+     transform: rotate(360deg);
+    }
+ }
+ 
+ 
+ 
