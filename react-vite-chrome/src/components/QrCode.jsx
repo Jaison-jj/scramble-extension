@@ -10,6 +10,8 @@ const QrCode = ({
   parentId = "qr-container",
   qrId = "dv_canvas",
   size = 170,
+  onResetQr,
+  showQrMask
 }) => {
   const [qrValue] = useState(value);
   const [qrSize] = useState(size);
@@ -55,7 +57,8 @@ const QrCode = ({
         text="Refresh Code"
         icon={RefreshIcon}
         className="absolute top-[13px] left-[13px] z-50 -scale-x-100 scale-y-100"
-        isShow={false}
+        isShow={showQrMask}
+        onClick={onResetQr}
       />
     </section>
   );
@@ -66,6 +69,8 @@ QrCode.propTypes = {
   parentId: PropTypes.string,
   qrId: PropTypes.string,
   size: PropTypes.number,
+  onResetQr: PropTypes.func,
+  showQrMask: PropTypes.bool,
 };
 
 export default QrCode;

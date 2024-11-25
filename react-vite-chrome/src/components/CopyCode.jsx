@@ -1,4 +1,4 @@
-import CopyIcon from "../assets/icons/copy.svg"
+import CopyIcon from "../assets/icons/copy.svg";
 import { cn } from "../utils/cn";
 import PropTypes from "prop-types";
 
@@ -12,14 +12,14 @@ const CopyCodeButton = (props) => {
         className
       )}
     >
-        <img src={CopyIcon} alt="copy" className="mt-[3px]"/>
-      <span className="text-base font-normal">Copy</span> 
+      <img src={CopyIcon} alt="copy" className="mt-[3px] dark:invert-[1]" />
+      <span className="text-base font-normal dark:text-[#B3B3B3]">Copy</span>
     </button>
   );
 };
 
 CopyCodeButton.propTypes = {
-    className: PropTypes.string,
-  };
+  className: PropTypes.string,
+};
 
 export default CopyCodeButton;

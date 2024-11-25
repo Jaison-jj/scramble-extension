@@ -3,7 +3,7 @@ import HideTypeCode from "./HideTypeCode";
 import RefreshIcon from "../assets/icons/refresh.svg";
 
 const TypeCode = (props) => {
-  const { code = "12V43P" } = props;
+  const { code = "12V43P", showQrMask, onResetTimer } = props;
 
   return (
     <div className="bg-white w-[260px] h-[100px] flex items-center justify-center">
@@ -21,7 +21,8 @@ const TypeCode = (props) => {
         icon={RefreshIcon}
         text="Refresh Code"
         className={"absolute"}
-        isShow={false}
+        isShow={showQrMask}
+        onResetTimer={onResetTimer}
       />
     </div>
   );
@@ -29,6 +30,8 @@ const TypeCode = (props) => {
 
 TypeCode.propTypes = {
   code: PropTypes.string,
+  onResetTimer: PropTypes.func,
+  showQrMask: PropTypes.bool,
 };
 
 export default TypeCode;

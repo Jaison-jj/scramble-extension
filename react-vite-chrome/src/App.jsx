@@ -7,13 +7,13 @@ import NewCircularLoader from "./components/loader/NewCircularLoader";
 import Footer from "./components/Footer";
 import RectangularProgressbar from "./components/loader/RectangularProgressbar";
 import TypeCode from "./components/TypeCode";
-import Credentials from "./components/Credentials";
-import Loader from "./components/Loader";
-import InvalidSession from "./components/InvalidSession";
+// import Credentials from "./components/Credentials";
+// import Loader from "./components/Loader";
+// import InvalidSession from "./components/InvalidSession";
 
 function App() {
   const [codeData, setCodeData] = useState(null);
-  const [codeType, setCodeType] = useState("qrCoder");
+  const [codeType, setCodeType] = useState("qrCode");
 
   useEffect(() => {
     chrome?.runtime?.sendMessage({
@@ -38,7 +38,7 @@ function App() {
 
   return (
     <>
-      <div className="w-[340px] min-h-[424px] font-switzer">
+      <div className="w-[340px] min-h-[424px] font-switzer dark:bg-black">
         <Header />
         <NewCircularLoader isShow={codeType === "qrCode"}>
           <QrCode
@@ -51,7 +51,7 @@ function App() {
         </RectangularProgressbar>
 
         {/* <Loader/> */}
-        <Credentials />
+        {/* <Credentials /> */}
         {/* <InvalidSession /> */}
 
         <Footer codeType={codeType} setCodeType={setCodeType} />

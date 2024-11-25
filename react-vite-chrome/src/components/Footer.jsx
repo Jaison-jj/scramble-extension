@@ -17,7 +17,7 @@ const Footer = (props) => {
     <div className="flex justify-around py-6 text-lg">
       <p
         className={cn("font-semibold text-gray-500", {
-          "text-black": !isOn,
+          "text-black dark:text-white": !isOn,
         })}
       >
         QR code
@@ -25,7 +25,7 @@ const Footer = (props) => {
       <ToggleButton isOn={isOn} setIsOn={onToggle} />
       <p
         className={cn("font-semibold text-gray-500", {
-          "text-black": isOn,
+          "text-black dark:text-white": isOn,
         })}
       >
         Type code

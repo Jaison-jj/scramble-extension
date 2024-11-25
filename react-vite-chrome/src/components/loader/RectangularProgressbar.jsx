@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import CopyCodeButton from "../CopyCode";
 import PropTypes from "prop-types";
 import { cn } from "../../utils/cn";
@@ -6,24 +6,27 @@ import { cn } from "../../utils/cn";
 const RectangularProgressbar = (props) => {
   const { children, isShow } = props;
 
-  const [progress, setProgress] = useState(100); // Starts full (100%)
+  const [progress, setProgress] = useState(100);
+  const [showQrMask, setShowQrMask] = useState(false);
+
   const timerRef = useRef(null);
 
   const startTimer = () => {
-    clearInterval(timerRef.current);
+    setProgress(100); // Reset progress to 100%
+    setShowQrMask(false);
+    clearInterval(timerRef.current); // Clear any existing timer
 
-    setProgress(100);
-
-    const duration = 60000; // 60 seconds
-    const step = 100 / duration; // Decrement per millisecond
+    const duration = 60000;
+    const step = 100 / duration; // Reduction per millisecond
 
     timerRef.current = setInterval(() => {
       setProgress((prev) => {
         if (prev <= 0) {
           clearInterval(timerRef.current);
+          setShowQrMask(true);
           return 0;
         }
-        return prev - (step * 1000) / 60; // Decrement for ~60fps
+        return prev - (step * 1000) / 60; // Decrement per frame (~60fps)
       });
     }, 1000 / 60);
   };
@@ -34,7 +37,7 @@ const RectangularProgressbar = (props) => {
   }, []);
 
   // Calculate the stroke-dashoffset for the progress bar
-  const strokeDashoffset = 400 - (progress / 100) * 400;
+  const strokeDashoffset = 400 - (progress / 100) * 500;
 
   return (
     <div
@@ -59,12 +62,18 @@ const RectangularProgressbar = (props) => {
           strokeDashoffset={strokeDashoffset}
           style={{
             transition: "stroke-dashoffset 0.1s linear",
+            // strokeDashoffset:"calc((1 - var(--progress)) * (-400))"
           }}
         />
       </svg>
-      <button onClick={startTimer} className="typeCode">
-        {children}
-      </button>
+      <div className="typeCode">
+        {React.isValidElement(children)
+          ? React.cloneElement(children, {
+              onResetTimer: startTimer,
+              showQrMask,
+            })
+          : children}
+      </div>
 
       <CopyCodeButton className="absolute bottom-[43px] left-[131px]" />
     </div>
@@ -73,7 +82,7 @@ const RectangularProgressbar = (props) => {
 
 RectangularProgressbar.propTypes = {
   children: PropTypes.any,
-  isShow:PropTypes.bool
+  isShow: PropTypes.bool,
 };
 
 export default RectangularProgressbar;

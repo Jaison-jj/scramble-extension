@@ -1,31 +1,41 @@
-import { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { clearInterval, setInterval } from "worker-timers";
 import PropTypes from "prop-types";
 import CopyCodeButton from "../CopyCode";
 import { cn } from "../../utils/cn";
 
 const NewCircularLoader = ({ children, isShow }) => {
-  const [progress, setProgress] = useState(100); // Starts full (100%)
-  const radius = 130; // Circle radius
-  const strokeWidth = 6; // Stroke width
+  const radius = 130; 
+  const strokeWidth = 6;
   const circumference = 2 * Math.PI * radius; // Circle circumference
   const timerRef = useRef(null);
 
-  useEffect(() => {
-    // Animate progress from 100 to 0 over 60 seconds
-    const duration = 60000; // 60 seconds
-    const step = 100 / duration; // Reduction per millisecond
+  const [progress, setProgress] = useState(100); 
+  const [showQrMask, setShowQrMask] = useState(false);
 
+  const onResetQr = () => {
+    setProgress(100); // Reset progress to 100%
+    setShowQrMask(false); 
+    clearInterval(timerRef.current); // Clear any existing timer
+  
+    const duration = 60000; 
+    const step = 100 / duration; // Reduction per millisecond
+  
     timerRef.current = setInterval(() => {
       setProgress((prev) => {
         if (prev <= 0) {
           clearInterval(timerRef.current);
+          setShowQrMask(true);
           return 0;
         }
         return prev - (step * 1000) / 60; // Decrement per frame (~60fps)
       });
     }, 1000 / 60);
+  };
+  
 
+  useEffect(() => {
+    onResetQr();
     return () => clearInterval(timerRef.current);
   }, []);
 
@@ -56,6 +66,7 @@ const NewCircularLoader = ({ children, isShow }) => {
           viewBox={`0 0 ${radius * 2 + strokeWidth * 2} ${
             radius * 2 + strokeWidth * 2
           }`}
+          className={cn({"hidden":showQrMask})}
         >
           {/* Full red background */}
           <circle
@@ -63,7 +74,7 @@ const NewCircularLoader = ({ children, isShow }) => {
             cy={radius + strokeWidth}
             r={radius}
             fill="transparent"
-            stroke="#FF0000" // Red
+            stroke="transparent" // Red
             strokeWidth={strokeWidth - 1}
           />
           {/* Yellow progress */}
@@ -95,7 +106,9 @@ const NewCircularLoader = ({ children, isShow }) => {
             justifyContent: "center",
           }}
         >
-          {children}
+          {React.isValidElement(children)
+            ? React.cloneElement(children, { onResetQr, showQrMask })
+            : children}
           <CopyCodeButton className="absolute bottom-[-50px] left-[110px] -scale-x-100 scale-y-100" />
         </div>
       </div>

@@ -1,8 +1,7 @@
 @font-face {
-  font-family: 'switzer';
-  src: url('./assets/fonts/Switzer-Variable.ttf') format('truetype');
+  font-family: "switzer";
+  src: url("./assets/fonts/Switzer-Variable.ttf") format("truetype");
 }
-
 
 @tailwind base;
 @tailwind components;
@@ -20,12 +19,6 @@
   transform: translate(-50%, -50%);
 }
 
-@keyframes spin {
-  to {
-    stroke-dashoffset: -400;
-  }
-}
-
 .rectProgressSvg {
   display: block;
   margin: 0 auto; /* Center horizontally */
@@ -35,16 +28,22 @@
 
 .rectProgressSvg rect {
   width: 104.7px;
-  height: 42.5px; 
+  height: 42.5px;
   x: 10px;
-  y: 10px; 
+  y: 10px;
   fill: none;
   stroke-width: 2;
 
   /* ################### */
   stroke-linecap: square;
   stroke-dashoffset: calc((1 - var(--progress)) * (-400));
-  animation: spin var(--speed) infinite linear;
+  /* animation: spin var(--speed) infinite linear; */
+}
+
+@keyframes spin {
+  to {
+    stroke-dashoffset: -400;
+  }
 }
 
 .rectProgressSvg .bgRect {
@@ -55,18 +54,20 @@
 
 .animate-rotate {
   animation: animName 1s linear infinite;
-
 }
 
-
 @keyframes animName {
-  0%{
-     transform: rotate(0deg);
-    }
- 100%{
-     transform: rotate(360deg);
-    }
- }
- 
- 
- 
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .authBackground {
+    background: #1F1F1F;
+    backdrop-filter: blur(50px);
+  }
+}
