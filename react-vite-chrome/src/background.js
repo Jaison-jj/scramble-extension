@@ -1,7 +1,11 @@
 /* eslint-disable no-undef */
+console.log("hello from sw now!!");
+
 async function getQidOrDid() {
   const res = await fetch(
-    "https://wsp2.dev.scrambleid.com/login/portal/ZGVtfHxkZW0tcG9ydGFs?format=json",
+    `https://wsp2.${
+      import.meta.env.VITE_SUBDOMAIN
+    }.scrambleid.com/login/portal/ZGVtfHxkZW0tcG9ydGFs?format=json`,
     {
       headers: {
         accept: "*/*",
@@ -47,10 +51,17 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
       },
     });
 
-    // const epochTime = Math.floor(Date.now() / 1000);
-    // const wsUrl = `wss://wsp.qa.scrambleid.com/v1?action=PORTAL&qid=${authCodeData?.qid}&did=${authCodeData.did}&org=${authCodeData?.code}&epoch=${epochTime}&amznReqId=${authCodeData?.amznReqId}`;
+    const epochTime = Math.floor(Date.now() / 1000) * 1000;
+    const wsUrl = `wss://wsp.${
+      import.meta.env.VITE_SUBDOMAIN
+    }.scrambleid.com/v1?action=PORTAL&qid=${authCodeData?.qid}&did=${
+      authCodeData.did
+    }&org=${authCodeData?.code}&epoch=${epochTime}&amznReqId=${
+      authCodeData?.amznReqId
+    }`;
+    console.log(wsUrl);
 
-    await establishWsConnection();
+    await establishWsConnection(wsUrl);
 
     const scrambleState = await chrome.storage.local.get("Auth");
 
@@ -61,18 +72,28 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
   }
 });
 
-async function establishWsConnection() {
-  const socket = new WebSocket("wss://echo.websocket.events");
+async function establishWsConnection(url) {
+  const wsTestUrl = "wss://echo.websocket.events";
+  const socket = new WebSocket(url);
 
   socket.addEventListener("open", () => {
     socket.send("Hello! how are you");
   });
 
   socket.addEventListener("message", async (event) => {
-
     await chrome.runtime.sendMessage({
       action: "received_ws_message",
-      wsEvent:event.data
+      wsEvent: event.data,
     });
+  });
+
+  socket.addEventListener("error", (error) => {
+    console.error("WebSocket error:", error);
+  });
+
+  socket.addEventListener("close", (event) => {
+    console.warn(
+      `WebSocket connection closed: Code=${event.code}, Reason=${event.reason}`
+    );
   });
 }

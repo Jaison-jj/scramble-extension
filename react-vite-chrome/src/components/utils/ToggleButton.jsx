@@ -11,7 +11,7 @@ const ToggleButton = (props) => {
         width: "60px",
         height: "30px",
         borderRadius: "15px",
-        backgroundColor: isOn ? "#4caf50" : "#ccc",
+        backgroundColor: isOn ? "#ccc" : "#ccc",
         display: "flex",
         alignItems: "center",
         padding: "2px",

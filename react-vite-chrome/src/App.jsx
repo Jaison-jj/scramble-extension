@@ -9,10 +9,11 @@ import RectangularProgressbar from "./components/loader/RectangularProgressbar";
 import TypeCode from "./components/TypeCode";
 import Credentials from "./components/Credentials";
 import Loader from "./components/Loader";
+import InvalidSession from "./components/InvalidSession";
 
 function App() {
   const [codeData, setCodeData] = useState(null);
-  const [codeType, setCodeType] = useState("qrCode");
+  const [codeType, setCodeType] = useState("qrCoder");
 
   useEffect(() => {
     chrome?.runtime?.sendMessage({
@@ -50,7 +51,8 @@ function App() {
         </RectangularProgressbar>
 
         {/* <Loader/> */}
-        {/* <Credentials /> */}
+        <Credentials />
+        {/* <InvalidSession /> */}
 
         <Footer codeType={codeType} setCodeType={setCodeType} />
       </div>

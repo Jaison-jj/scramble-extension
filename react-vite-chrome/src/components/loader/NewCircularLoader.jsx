@@ -35,7 +35,7 @@ const NewCircularLoader = ({ children, isShow }) => {
   return (
     <div
       className={cn(
-        "authBackground w-[95%] pt-[38px]  h-[408px] mx-auto rounded-md",
+        "authBackground pt-[38px] w-[95%] h-[408px] mx-auto rounded-md",
         {
           hidden: !isShow,
         }

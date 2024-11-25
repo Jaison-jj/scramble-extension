@@ -2,6 +2,9 @@ import { useEffect, useState, useRef } from "react";
 import { QrCodeGenerator } from "../utils/qr-code-generator";
 import PropTypes from "prop-types";
 
+import HideQrCode from "./HideQrCode";
+import RefreshIcon from "../assets/icons/refresh.svg";
+
 const QrCode = ({
   value = "",
   parentId = "qr-container",
@@ -48,6 +51,12 @@ const QrCode = ({
       <div id={parentId} className="">
         <div id={qrId}></div>
       </div>
+      <HideQrCode
+        text="Refresh Code"
+        icon={RefreshIcon}
+        className="absolute top-[13px] left-[13px] z-50 -scale-x-100 scale-y-100"
+        isShow={false}
+      />
     </section>
   );
 };

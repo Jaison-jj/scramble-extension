@@ -3,9 +3,22 @@ import PropTypes from "prop-types";
 
 const TextInput = (props) => {
   const { type, htmlFor, name, label, value } = props;
+
+  const onClickCopy = () => {
+    navigator.clipboard.writeText(value)
+      .then(() => {
+        console.log('Text copied to clipboard:', value);
+      })
+      .catch(err => {
+        console.error('Error copying text:', err);
+      });
+  };
+
   return (
     <div className="flex flex-col gap-1 w-full relative">
-      <label htmlFor={htmlFor}>{label}</label>
+      <label htmlFor={htmlFor} className="text-sm font-normal">
+        {label}
+      </label>
       <input
         type={type}
         placeholder="username"
@@ -15,7 +28,10 @@ const TextInput = (props) => {
         disabled
       />
 
-      <button className="absolute top-[49px] right-[11px] active:scale-50 transition-transform duration-150">
+      <button
+        onClick={onClickCopy}
+        className="absolute top-[44px] right-[11px] active:scale-50 transition-transform duration-150"
+      >
         <img src={CopyIcon} alt="copy" className="" />
       </button>
     </div>

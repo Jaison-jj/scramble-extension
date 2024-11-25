@@ -1,7 +1,9 @@
 import PropTypes from "prop-types";
+import HideTypeCode from "./HideTypeCode";
+import RefreshIcon from "../assets/icons/refresh.svg";
 
 const TypeCode = (props) => {
-  const { code = "ABCDEF" } = props;
+  const { code = "12V43P" } = props;
 
   return (
     <div className="bg-white w-[260px] h-[100px] flex items-center justify-center">
@@ -15,6 +17,12 @@ const TypeCode = (props) => {
           </span>
         ))}
       </p>
+      <HideTypeCode
+        icon={RefreshIcon}
+        text="Refresh Code"
+        className={"absolute"}
+        isShow={false}
+      />
     </div>
   );
 };
