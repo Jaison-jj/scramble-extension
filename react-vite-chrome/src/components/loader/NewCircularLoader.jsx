@@ -130,7 +130,7 @@ const NewCircularLoader = ({ children, isShow }) => {
                 showQrMask,
               })
             : children}
-          <CopyCodeButton className="absolute bottom-[-50px] left-[110px] -scale-x-100 scale-y-100" />
+          <CopyCodeButton className={cn("absolute bottom-[-50px] left-[110px] -scale-x-100 scale-y-100")} />
         </div>
       </div>
     </div>

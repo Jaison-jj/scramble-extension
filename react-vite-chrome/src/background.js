@@ -61,7 +61,6 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     }&org=${authCodeData?.code}&epoch=${epochTime}&amznReqId=${
       authCodeData?.amznReqId
     }`;
-    console.log(wsUrl);
 
     await establishWsConnection(wsUrl);
 
@@ -90,11 +89,11 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
 async function establishWsConnection(url) {
   const testWs = "wss://echo.websocket.org/"
   // Create the WebSocket connection
-  socket = new WebSocket(testWs);
+  socket = new WebSocket(url);
 
   socket.addEventListener("open", () => {
     console.log("WebSocket connection established.");
-    socket.send("Hello! How are you?");
+    // socket.send("Hello! How are you?");
   });
 
   socket.addEventListener("message", async (event) => {

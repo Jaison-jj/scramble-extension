@@ -11,7 +11,8 @@ const QrCode = ({
   qrId = "dv_canvas",
   size = 170,
   onResetQr,
-  showQrMask
+  showQrMask,
+  loading,
 }) => {
   const [qrValue] = useState(value);
   const [qrSize] = useState(size);
@@ -50,6 +51,7 @@ const QrCode = ({
 
   return (
     <section>
+
       <div id={parentId} className="">
         <div id={qrId}></div>
       </div>

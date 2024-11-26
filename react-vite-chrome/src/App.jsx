@@ -10,6 +10,7 @@ import TypeCode from "./components/TypeCode";
 // import Credentials from "./components/Credentials";
 // import Loader from "./components/Loader";
 // import InvalidSession from "./components/InvalidSession";
+import LoaderIcon from "./assets/icons/loading.svg";
 
 function App() {
   const [codeData, setCodeData] = useState(null);
@@ -24,10 +25,6 @@ function App() {
       if (request.action === "transfer_auth_code") {
         setCodeData(request.scrambleState.Auth.data);
       }
-
-      if (request.action === "received_ws_message") {
-        console.log(request);
-      }
     };
 
     chrome?.runtime?.onMessage.addListener(getAuthCodeData);
@@ -36,19 +33,29 @@ function App() {
     };
   }, []);
 
+  const renderCode = codeData ? (
+    <>
+      <NewCircularLoader isShow={codeType === "qrCode"}>
+        <QrCode
+          loading={!codeData}
+          value={`https://app.qa.scrambleid.com/qr?id=${codeData?.code}:${codeData?.qid}`}
+        />
+      </NewCircularLoader>
+      <RectangularProgressbar isShow={codeType === "typeCode"}>
+        <TypeCode />
+      </RectangularProgressbar>
+    </>
+  ) : (
+    <div className="h-[408px] w-[95%] rounded-md authBackground mx-auto flex justify-center items-center">
+      <img src={LoaderIcon} alt="loading" className="animate-rotate" />
+    </div>
+  );
+
   return (
     <>
-      <div className="w-[340px] min-h-[424px] font-switzer dark:bg-black">
+      <div className="w-[340px] min-h-[424px] font-switzer dark:bg-black flex flex-col">
         <Header />
-        <NewCircularLoader isShow={codeType === "qrCode"}>
-          <QrCode
-            value={`https://app.qa.scrambleid.com/qr?id=${codeData?.code}:${codeData?.qid}`}
-          />
-        </NewCircularLoader>
-
-        <RectangularProgressbar isShow={codeType === "typeCode"}>
-          <TypeCode />
-        </RectangularProgressbar>
+        <div className="flex-grow flex">{renderCode}</div>
 
         {/* <Loader/> */}
         {/* <Credentials /> */}
