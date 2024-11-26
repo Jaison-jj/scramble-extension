@@ -64,8 +64,7 @@ const RectangularProgressbar = (props) => {
         <rect
           width={width}
           height={height}
-          className="bgRect"
-          stroke="#FFD700"
+          className="bgRect stroke-[#FFD700]"
           strokeWidth={strokeWidth}
           fill="none"
           x={10}
@@ -75,14 +74,14 @@ const RectangularProgressbar = (props) => {
         <rect
           width={width}
           height={height}
-          strokeWidth={strokeWidth}
+          strokeWidth={strokeWidth +0.2}
           x={10}
           y={10}
           fill="none"
-          stroke="#f8efc4"
           strokeDasharray={perimeter}
           strokeDashoffset={offset}
           strokeLinecap="square"
+          className="#f8efc4 dark:stroke-[#4d4623]"
           // style={
           //   {
           //     strokeDashoffset: "calc((1 - var(--progress)) * (-400))",

@@ -6,8 +6,8 @@ const TypeCode = (props) => {
   const { code = "12V43P", showQrMask, onResetTimer } = props;
 
   return (
-    <div className="bg-white w-[260px] h-[100px] flex items-center justify-center">
-      <p className="text-[hsl(0,0%,8%)] text-center text-[33px] not-italic font-medium leading-9 tracking-[16px]">
+    <div className="bg-white dark:bg-black  w-[260px] h-[100px] flex items-center justify-center">
+      <p className="text-[hsl(0,0%,8%)] dark:text-white text-center text-[33px] not-italic font-medium leading-9 tracking-[16px]">
         {code.split("").map((char, index) => (
           <span
             key={index}
