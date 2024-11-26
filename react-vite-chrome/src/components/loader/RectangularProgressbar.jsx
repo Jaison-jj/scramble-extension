@@ -6,6 +6,11 @@ import { cn } from "../../utils/cn";
 const RectangularProgressbar = (props) => {
   const { children, isShow } = props;
 
+  const width = 104.7;
+  const height = 42.5;
+  const strokeWidth = 2;
+  const perimeter = 2 * (104.7 + 42.5);
+
   const [progress, setProgress] = useState(100);
   const [showQrMask, setShowQrMask] = useState(false);
 
@@ -14,7 +19,7 @@ const RectangularProgressbar = (props) => {
   const startTimer = () => {
     setProgress(100); // Reset progress to 100%
     setShowQrMask(false);
-    clearInterval(timerRef.current); // Clear any existing timer
+    clearInterval(timerRef.current);
 
     const duration = 60000;
     const step = 100 / duration; // Reduction per millisecond
@@ -37,7 +42,8 @@ const RectangularProgressbar = (props) => {
   }, []);
 
   // Calculate the stroke-dashoffset for the progress bar
-  const strokeDashoffset = 400 - (progress / 100) * 500;
+  // const strokeDashoffset = 400 - (progress / 100) * 500;
+  const offset = (progress / 100) * perimeter;
 
   return (
     <div
@@ -55,15 +61,33 @@ const RectangularProgressbar = (props) => {
         }}
         viewBox={`0 0 ${104 + 20} ${40 + 20}`}
       >
-        <rect className="bgRect" stroke="#f8efc4" />
         <rect
+          width={width}
+          height={height}
+          className="bgRect"
           stroke="#FFD700"
-          strokeDasharray="400 400"
-          strokeDashoffset={strokeDashoffset}
-          style={{
-            transition: "stroke-dashoffset 0.1s linear",
-            // strokeDashoffset:"calc((1 - var(--progress)) * (-400))"
-          }}
+          strokeWidth={strokeWidth}
+          fill="none"
+          x={10}
+          y={10}
+          strokeLinecap="square"
+        />
+        <rect
+          width={width}
+          height={height}
+          strokeWidth={strokeWidth}
+          x={10}
+          y={10}
+          fill="none"
+          stroke="#f8efc4"
+          strokeDasharray={perimeter}
+          strokeDashoffset={offset}
+          strokeLinecap="square"
+          // style={
+          //   {
+          //     strokeDashoffset: "calc((1 - var(--progress)) * (-400))",
+          //   }
+          // }
         />
       </svg>
       <div className="typeCode">

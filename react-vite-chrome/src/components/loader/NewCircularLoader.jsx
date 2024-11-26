@@ -5,22 +5,33 @@ import CopyCodeButton from "../CopyCode";
 import { cn } from "../../utils/cn";
 
 const NewCircularLoader = ({ children, isShow }) => {
-  const radius = 130; 
+  const radius = 130;
   const strokeWidth = 6;
   const circumference = 2 * Math.PI * radius; // Circle circumference
   const timerRef = useRef(null);
 
-  const [progress, setProgress] = useState(100); 
+  const [progress, setProgress] = useState(100);
   const [showQrMask, setShowQrMask] = useState(false);
 
-  const onResetQr = () => {
+  const onResetTimer = async () => {
+    await chrome?.runtime?.sendMessage(
+      {
+        action: "restart_qr_timer",
+      },
+      async (response) => {
+        console.log(response);
+      }
+    );
+  };
+
+  const startTimer = () => {
     setProgress(100); // Reset progress to 100%
-    setShowQrMask(false); 
+    setShowQrMask(false);
     clearInterval(timerRef.current); // Clear any existing timer
-  
-    const duration = 60000; 
+
+    const duration = 60000;
     const step = 100 / duration; // Reduction per millisecond
-  
+
     timerRef.current = setInterval(() => {
       setProgress((prev) => {
         if (prev <= 0) {
@@ -32,11 +43,18 @@ const NewCircularLoader = ({ children, isShow }) => {
       });
     }, 1000 / 60);
   };
-  
 
   useEffect(() => {
-    onResetQr();
+    startTimer();
     return () => clearInterval(timerRef.current);
+  }, []);
+
+  useEffect(() => {
+    chrome?.runtime?.onMessage.addListener((request) => {
+      if (request.action === "") {
+        setShowQrMask(false);
+      }
+    });
   }, []);
 
   // Calculate stroke-dashoffset for the red progress part
@@ -66,7 +84,7 @@ const NewCircularLoader = ({ children, isShow }) => {
           viewBox={`0 0 ${radius * 2 + strokeWidth * 2} ${
             radius * 2 + strokeWidth * 2
           }`}
-          className={cn({"hidden":showQrMask})}
+          className={cn({ hidden: showQrMask })}
         >
           {/* Full red background */}
           <circle
@@ -107,7 +125,10 @@ const NewCircularLoader = ({ children, isShow }) => {
           }}
         >
           {React.isValidElement(children)
-            ? React.cloneElement(children, { onResetQr, showQrMask })
+            ? React.cloneElement(children, {
+                onResetQr: onResetTimer,
+                showQrMask,
+              })
             : children}
           <CopyCodeButton className="absolute bottom-[-50px] left-[110px] -scale-x-100 scale-y-100" />
         </div>

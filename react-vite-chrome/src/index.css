@@ -14,8 +14,8 @@
 
 .typeCode {
   position: absolute;
-  top: 39.5%;
-  left: 50.2%;
+  top: 39.583%;
+  left: 50.45%;
   transform: translate(-50%, -50%);
 }
 
@@ -26,37 +26,11 @@
   height: auto; /* Maintain aspect ratio */
 }
 
-.rectProgressSvg rect {
-  width: 104.7px;
-  height: 42.5px;
-  x: 10px;
-  y: 10px;
-  fill: none;
-  stroke-width: 2;
-
-  /* ################### */
-  stroke-linecap: square;
-  stroke-dashoffset: calc((1 - var(--progress)) * (-400));
-  /* animation: spin var(--speed) infinite linear; */
-}
-
-@keyframes spin {
-  to {
-    stroke-dashoffset: -400;
-  }
-}
-
-.rectProgressSvg .bgRect {
-  stroke-dasharray: none;
-  stroke-dashoffset: 0;
-  animation: none;
-}
-
 .animate-rotate {
-  animation: animName 1s linear infinite;
+  animation: apiLoader 1s linear infinite;
 }
 
-@keyframes animName {
+@keyframes apiLoader {
   0% {
     transform: rotate(0deg);
   }
@@ -67,7 +41,7 @@
 
 @media (prefers-color-scheme: dark) {
   .authBackground {
-    background: #1F1F1F;
+    background: #1f1f1f;
     backdrop-filter: blur(50px);
   }
 }

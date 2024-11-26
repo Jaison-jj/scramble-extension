@@ -12,7 +12,7 @@ const HideQrCode = ({ className, icon, text, isShow, onClick }) => {
       )}
     >
       <img src={icon} alt="refresh" />
-      <p>{text}</p>
+      <p className="text-lg font-semibold dark:text-white">{text}</p>
     </div>
   );
 };
