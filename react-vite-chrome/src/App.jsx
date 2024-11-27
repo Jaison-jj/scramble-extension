@@ -30,7 +30,7 @@ function App() {
 
   useEffect(() => {
     chrome?.runtime?.sendMessage({ action: "open_popup" });
-
+    
     const handleMessages = (request) => {
       switch (request.action) {
         case "transfer_auth_code":

@@ -5,27 +5,31 @@ import PropTypes from "prop-types";
 
 const Footer = (props) => {
   const { codeType, setCodeType } = props;
-  const [isOn, setIsOn] = useState(codeType === "typeCode");
 
-  const onToggle = () => {
-    setIsOn(!isOn);
-    if (codeType === "qrCode") return setCodeType("typeCode");
-    setCodeType("qrCode");
+  const onToggle = async () => {
+    const newCodeType = codeType === "qrCode" ? "typeCode" : "qrCode";
+
+    await chrome?.runtime?.sendMessage({
+      action: "switchCodeType",
+      codeType: newCodeType === "qrCode" ? "QID" : "DID",
+    });
+
+    setCodeType(newCodeType);
   };
 
   return (
     <div className="flex justify-around py-6 text-lg">
       <p
         className={cn("font-semibold text-gray-500", {
-          "text-black dark:text-white": !isOn,
+          "text-black dark:text-white": codeType === "qrCode",
         })}
       >
         QR code
       </p>
-      <ToggleButton isOn={isOn} setIsOn={onToggle} />
+      <ToggleButton isOn={codeType === "typeCode"} setIsOn={onToggle} />
       <p
         className={cn("font-semibold text-gray-500", {
-          "text-black dark:text-white": isOn,
+          "text-black dark:text-white": codeType === "typeCode",
         })}
       >
         Type code

@@ -64,12 +64,12 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     });
   }
 
+  const {
+    Auth: { scrambleState },
+  } = await chrome.storage.local.get("Auth");
+
   if (request.action === "restart_qr_timer") {
     if (socket && socket.readyState === WebSocket.OPEN) {
-      const {
-        Auth: { scrambleState },
-      } = await chrome.storage.local.get("Auth");
-
       const message = {
         op: "QID",
         value: scrambleState.qid,
@@ -82,6 +82,18 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     } else {
       console.error("WebSocket is not connected or is in a wrong state.");
     }
+  }
+
+  if (request.action === "switchCodeType") {
+    const message = {
+      op: request.codeType,
+      value: scrambleState.qid,
+      org: scrambleState.code,
+      source: "PORTAL",
+      action: "PORTAL",
+      amznReqId: scrambleState.amznReqId,
+    };
+    socket.send(JSON.stringify(message));
   }
 });
 
