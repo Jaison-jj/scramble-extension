@@ -1,7 +1,7 @@
 /* eslint-disable no-undef */
 console.log("hello from sw!!");
 
-let socket = null; // Declare socket variable to hold WebSocket connection
+let socket = null;
 
 async function getQidOrDid() {
   const res = await fetch(
@@ -39,17 +39,11 @@ const Step = {
 
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
   if (request.action === "open_popup") {
-    chrome.storage.local.set({
-      Auth: {
-        step: Step.INIT,
-      },
-    });
-
     const authCodeData = await getQidOrDid();
 
     chrome.storage.local.set({
       Auth: {
-        data: authCodeData,
+        scrambleState: authCodeData,
       },
     });
 
@@ -64,22 +58,27 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
 
     await establishWsConnection(wsUrl);
 
-    const scrambleState = await chrome.storage.local.get("Auth");
-
     await chrome.runtime.sendMessage({
       action: "transfer_auth_code",
-      scrambleState,
+      authCodeData,
     });
   }
 
   if (request.action === "restart_qr_timer") {
     if (socket && socket.readyState === WebSocket.OPEN) {
-      const message = { action: "restart_timer" };
-      socket.send(JSON.stringify(message))
-      console.log(sender)
-      sendResponse({
-        message:"hide-qr-overlay-start-timer"
-      })
+      const {
+        Auth: { scrambleState },
+      } = await chrome.storage.local.get("Auth");
+
+      const message = {
+        op: "QID",
+        value: scrambleState.qid,
+        org: scrambleState.code,
+        source: "PORTAL",
+        action: "PORTAL",
+        amznReqId: scrambleState.amznReqId,
+      };
+      socket.send(JSON.stringify(message));
     } else {
       console.error("WebSocket is not connected or is in a wrong state.");
     }
@@ -87,23 +86,93 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
 });
 
 async function establishWsConnection(url) {
-  const testWs = "wss://echo.websocket.org/"
-  // Create the WebSocket connection
   socket = new WebSocket(url);
+
+  const {
+    Auth: { scrambleState },
+  } = await chrome.storage.local.get("Auth");
 
   socket.addEventListener("open", () => {
     console.log("WebSocket connection established.");
-    // socket.send("Hello! How are you?");
   });
 
   socket.addEventListener("message", async (event) => {
-    //check what is the message and then dispatch message to the popup
-    
-    await chrome.runtime.sendMessage({
-      action: "restart_trigger",
-      wsEvent: event.data,
-      job:"test-close"
-    });
+    const wsIncomingMessage = JSON.parse(event.data);
+
+    console.log("wsIncomingMessage,", wsIncomingMessage);
+
+    if (wsIncomingMessage.op === "WaitForConfirm") {
+      await chrome.runtime.sendMessage({
+        action: "waitingForConfirmationFromMob",
+        wsEvent: wsIncomingMessage,
+      });
+    }
+
+    if (wsIncomingMessage.op === "PORTAL") {
+      try {
+        await chrome.runtime.sendMessage({
+          action: "callingCredentialsApi",
+        });
+
+        const cookie = JSON.parse(wsIncomingMessage.value).cookie;
+        const cookieExpireAt = JSON.parse(wsIncomingMessage.value).expiresAt;
+
+        chrome.cookies.set(
+          {
+            url: import.meta.env.VITE_CRED_BASE_URL,
+            name: import.meta.env.VITE_COOKIE_NAME,
+            value: cookie,
+            expirationDate: cookieExpireAt,
+          },
+          async (cookie) => {
+            if (cookie) {
+              console.log("Cookie set successfully:");
+              await fetch(
+                `${
+                  import.meta.env.VITE_CRED_BASE_URL
+                }/api/v1/lid/start-session/ZGVtfHxsZGFwYXBwMQ`,
+                {
+                  method: "post",
+                  credentials: "include",
+                }
+              )
+                .then((response) => response.json())
+                .then(async (data) => {
+                  await chrome.runtime.sendMessage({
+                    action: "hideLoaderShowCredentials",
+                    user: data.user,
+                  });
+                });
+            } else {
+              console.error("Error setting cookie");
+            }
+          }
+        );
+      } catch (err) {
+        console.log(err);
+      }
+    }
+
+    if (wsIncomingMessage.op === "QID") {
+      // console.log(scrambleState)
+      await chrome.storage.local.set({
+        Auth: {
+          scrambleState: { ...scrambleState, qid: wsIncomingMessage.value },
+        },
+      });
+
+      await chrome.runtime.sendMessage({
+        action: "restartQrTimer",
+        newQid: wsIncomingMessage.value,
+        newCodeData: { ...scrambleState, qid: wsIncomingMessage.value },
+      });
+    }
+
+    if (wsIncomingMessage.op === "NO_CONSENT") {
+      await chrome.runtime.sendMessage({
+        action: "refreshCodeNoConsent",
+      });
+    }
   });
 
   socket.addEventListener("error", (error) => {

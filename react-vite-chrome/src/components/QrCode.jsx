@@ -1,9 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { QrCodeGenerator } from "../utils/qr-code-generator";
 import PropTypes from "prop-types";
-
 import HideQrCode from "./HideQrCode";
-import RefreshIcon from "../assets/icons/refresh.svg";
 
 const QrCode = ({
   value = "",
@@ -12,7 +10,8 @@ const QrCode = ({
   size = 170,
   onResetQr,
   showQrMask,
-  loading,
+  overlayIcon,
+  overlayText,
 }) => {
   const [qrValue] = useState(value);
   const [qrSize] = useState(size);
@@ -51,13 +50,12 @@ const QrCode = ({
 
   return (
     <section>
-
       <div id={parentId} className="">
         <div id={qrId}></div>
       </div>
       <HideQrCode
-        text="Refresh Code"
-        icon={RefreshIcon}
+        text={overlayText}
+        icon={overlayIcon}
         className="absolute top-[13px] left-[13px] z-50 -scale-x-100 scale-y-100"
         isShow={showQrMask}
         onClick={onResetQr}

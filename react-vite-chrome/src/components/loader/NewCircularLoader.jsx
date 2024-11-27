@@ -3,59 +3,63 @@ import { clearInterval, setInterval } from "worker-timers";
 import PropTypes from "prop-types";
 import CopyCodeButton from "../CopyCode";
 import { cn } from "../../utils/cn";
+import RefreshIcon from "../../assets/icons/refresh.svg";
 
-const NewCircularLoader = ({ children, isShow }) => {
+const NewCircularLoader = ({
+  children,
+  isShow,
+  showQrMask,
+  showLoader,
+  setCanShowCodeLoader,
+  setMask,
+  codeValue,
+}) => {
   const radius = 130;
   const strokeWidth = 6;
   const circumference = 2 * Math.PI * radius; // Circle circumference
   const timerRef = useRef(null);
 
   const [progress, setProgress] = useState(100);
-  const [showQrMask, setShowQrMask] = useState(false);
 
   const onResetTimer = async () => {
-    await chrome?.runtime?.sendMessage(
-      {
-        action: "restart_qr_timer",
-      },
-      async (response) => {
-        console.log(response);
-      }
-    );
+    await chrome?.runtime?.sendMessage({
+      action: "restart_qr_timer",
+    });
   };
 
   const startTimer = () => {
-    setProgress(100); // Reset progress to 100%
-    setShowQrMask(false);
-    clearInterval(timerRef.current); // Clear any existing timer
+    setProgress(100);
+    setMask({
+      showMask: false,
+    });
+    clearInterval(timerRef.current);
 
     const duration = 60000;
-    const step = 100 / duration; // Reduction per millisecond
+    const step = 100 / duration;
 
     timerRef.current = setInterval(() => {
       setProgress((prev) => {
         if (prev <= 0) {
           clearInterval(timerRef.current);
-          setShowQrMask(true);
+          setMask({
+            showMask: true,
+            text: "Refresh code",
+            icon: RefreshIcon,
+          });
+          setCanShowCodeLoader(false);
           return 0;
         }
-        return prev - (step * 1000) / 60; // Decrement per frame (~60fps)
+        return prev - (step * 1000) / 60;
       });
     }, 1000 / 60);
   };
 
   useEffect(() => {
-    startTimer();
+    if (showLoader) {
+      startTimer();
+    }
     return () => clearInterval(timerRef.current);
-  }, []);
-
-  useEffect(() => {
-    chrome?.runtime?.onMessage.addListener((request) => {
-      if (request.action === "") {
-        setShowQrMask(false);
-      }
-    });
-  }, []);
+  }, [showLoader,isShow]);
 
   // Calculate stroke-dashoffset for the red progress part
   const offset = circumference - (progress / 100) * circumference;
@@ -84,7 +88,7 @@ const NewCircularLoader = ({ children, isShow }) => {
           viewBox={`0 0 ${radius * 2 + strokeWidth * 2} ${
             radius * 2 + strokeWidth * 2
           }`}
-          className={cn({ hidden: showQrMask })}
+          className={cn({ hidden: !showLoader })}
         >
           {/* Full red background */}
           <circle
@@ -130,7 +134,12 @@ const NewCircularLoader = ({ children, isShow }) => {
                 showQrMask,
               })
             : children}
-          <CopyCodeButton className={cn("absolute bottom-[-50px] left-[110px] -scale-x-100 scale-y-100")} />
+          <CopyCodeButton
+            codeValue={codeValue}
+            className={cn(
+              "absolute bottom-[-50px] left-[110px] -scale-x-100 scale-y-100"
+            )}
+          />
         </div>
       </div>
     </div>

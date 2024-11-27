@@ -1,10 +1,19 @@
+import { cn } from "../utils/cn";
 import TextInput from "./utils/TextInput";
 
-const Credentials = () => {
+const Credentials = ({ isShow, userId = "sample", password = "sample" }) => {
   return (
-    <div className="h-[344px] w-[95%] authBackground rounded-md mx-auto flex flex-col items-start px-5 pt-[32px]">
+    <div
+      className={cn(
+        "hidden h-[344px] w-[95%] authBackground rounded-md mx-auto  flex-col items-start px-5 pt-[32px]",
+        {
+          flex: isShow,
+        }
+      )}
+    >
       <p className="pb-[40px] text-xl font-switzer font-thin max-w-[270px] dark:text-white">
-        ScrambleID generated login ID for <span className="font-semibold">“Democorp”</span>
+        ScrambleID generated login ID for{" "}
+        <span className="font-semibold">“Democorp”</span>
       </p>
       <div className="flex flex-col gap-5 w-full">
         <TextInput
@@ -12,14 +21,14 @@ const Credentials = () => {
           htmlFor="username"
           name="username"
           label="User ID"
-          value="value"
+          value={userId}
         />
         <TextInput
           type="password"
           htmlFor="password"
           name="password"
           label="Password"
-          value="123qwe"
+          value={password}
         />
       </div>
     </div>
