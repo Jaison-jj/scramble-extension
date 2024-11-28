@@ -3,7 +3,7 @@ import HideTypeCode from "./HideTypeCode";
 import RefreshIcon from "../assets/icons/refresh.svg";
 
 const TypeCode = (props) => {
-  const { code = "12V43P", showQrMask, onResetTimer } = props;
+  const { code, showQrMask, onResetTimer } = props;
 
   return (
     <div className="bg-white dark:bg-black  w-[260px] h-[100px] flex items-center justify-center">

@@ -3,13 +3,13 @@ import { cn } from "../utils/cn";
 import PropTypes from "prop-types";
 
 const CopyCodeButton = (props) => {
-  const { className, codeValue = "" } = props;
+  const { className, copyCodeValue = "null" } = props;
 
   const onClickCopy = () => {
     navigator.clipboard
-      .writeText(codeValue)
+      .writeText(copyCodeValue)
       .then(() => {
-        console.log("Code copied to clipboard:", codeValue);
+        console.log("Code copied to clipboard:", copyCodeValue);
       })
       .catch((err) => {
         console.error("Error copying Code:", err);

@@ -11,12 +11,14 @@ import Credentials from "./components/Credentials";
 import Loader from "./components/Loader";
 import LoaderIcon from "./assets/icons/loading.svg";
 import ClockIcon from "./assets/icons/clock.svg";
+import RefreshIcon from "./assets/icons/refresh.svg";
+import InvalidSession from "./components/InvalidSession";
 import { cn } from "./utils/cn";
 
 function App() {
   const [codeData, setCodeData] = useState(null);
   const [codeType, setCodeType] = useState("qrCode");
-  const [step, setStep] = useState("");
+  const [step, setStep] = useState("showCredentials");
   const [creds, setCreds] = useState({
     username: "nill",
     password: "nil",
@@ -28,9 +30,15 @@ function App() {
     showMask: false,
   });
 
+  const onClickReload = () => {
+    chrome?.runtime?.sendMessage({ action: "open_popup" });
+    setCodeType("qrCode");
+    setStep("");
+  };
+
   useEffect(() => {
     chrome?.runtime?.sendMessage({ action: "open_popup" });
-    
+
     const handleMessages = (request) => {
       switch (request.action) {
         case "transfer_auth_code":
@@ -38,21 +46,57 @@ function App() {
           setCanShowCodeLoader(true);
           break;
 
-        case "waitingForConfirmationFromMob" || "refreshCodeNoConsent":
+        case "waitingForConfirmationFromMob":
           setMask({
             showMask: true,
             text: "Waiting for confirmation on mobile app.",
             icon: ClockIcon,
           });
+          setStep("waitingForConfirmationFromMob");
           break;
 
-        case "CALLING_CREDENTIALS_API":
+        case "refreshCodeNoConsent":
+          setMask({
+            showMask: true,
+            text: "Refresh code",
+            icon: RefreshIcon,
+          });
+          canShowCodeLoader(false);
+          break;
+
+        case "callingCredentialsApi":
           setStep("callingCredsApi");
           setCodeType("");
           setCodeData(null);
           break;
 
         case "hideLoaderShowCredentials":
+          console.log("req", request);
+          setStep("showCredentials");
+          setCodeType("");
+          setCodeData(null);
+          setCreds({
+            username: request?.user?.userName || "lala",
+            password: request?.user?.password || "lala",
+          });
+          break;
+
+        case "restartQrTimer":
+          setMask({ showMask: false });
+          setCodeData(request.newCodeData);
+          setCanShowCodeLoader(true);
+          break;
+
+        case "restartTypeCodeTimer":
+          setCodeData(request.newCodeData);
+          break;
+
+        case "validationCodeReceived":
+          setCodeData(request.newCodeData);
+          setStep("validationCodeReceived");
+          break;
+
+        case "userExistShowCreds":
           setStep("showCredentials");
           setCodeType("");
           setCodeData(null);
@@ -62,10 +106,9 @@ function App() {
           });
           break;
 
-        case "restartQrTimer":
-          setMask({ showMask: false });
-          setCodeData(request.newCodeData);
-          setCanShowCodeLoader(true);
+        case "error":
+          setCodeType(null);
+          setStep("error");
           break;
 
         default:
@@ -80,7 +123,9 @@ function App() {
     };
   }, []);
 
-  const codeUrl = `https://app.qa.scrambleid.com/qr?id=${codeData?.code}:${codeData?.qid}`;
+  const codeUrl = `https://app.${
+    import.meta.env.VITE_SUBDOMAIN
+  }.scrambleid.com/qr?id=${codeData?.code}:${codeData?.qid}`;
 
   const renderCode = codeData ? (
     <>
@@ -90,7 +135,8 @@ function App() {
         showLoader={canShowCodeLoader}
         setCanShowCodeLoader={setCanShowCodeLoader}
         setMask={setMask}
-        codeValue={codeUrl}
+        copyCodeValue={`dem:${codeData?.qid}`}
+        currentStep={step}
       >
         <QrCode
           loading={!codeData}
@@ -100,8 +146,12 @@ function App() {
           key={codeData?.qid}
         />
       </NewCircularLoader>
-      <RectangularProgressbar isShow={codeType === "typeCode"}>
-        <TypeCode />
+      <RectangularProgressbar
+        isShow={codeType === "typeCode"}
+        currentStep={step}
+        code={codeData?.did}
+      >
+        <TypeCode code={codeData?.did || "NULL"} key={codeData?.did} />
       </RectangularProgressbar>
     </>
   ) : (
@@ -127,6 +177,7 @@ function App() {
         userId={creds.username}
         password={creds.password}
       />
+      <InvalidSession isShow={step === "error"} onClickReload={onClickReload} />
       <Footer codeType={codeType} setCodeType={setCodeType} />
     </div>
   );

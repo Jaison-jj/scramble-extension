@@ -12,7 +12,8 @@ const NewCircularLoader = ({
   showLoader,
   setCanShowCodeLoader,
   setMask,
-  codeValue,
+  copyCodeValue,
+  currentStep,
 }) => {
   const radius = 130;
   const strokeWidth = 6;
@@ -21,17 +22,14 @@ const NewCircularLoader = ({
 
   const [progress, setProgress] = useState(100);
 
-  const onResetTimer = async () => {
-    await chrome?.runtime?.sendMessage({
-      action: "restart_qr_timer",
-    });
-  };
-
   const startTimer = () => {
     setProgress(100);
-    setMask({
-      showMask: false,
-    });
+    if (currentStep !== "waitingForConfirmationFromMob") {
+      setMask({
+        showMask: false,
+      });
+    }
+
     clearInterval(timerRef.current);
 
     const duration = 60000;
@@ -54,12 +52,18 @@ const NewCircularLoader = ({
     }, 1000 / 60);
   };
 
+  const onResetTimer = async () => {
+    await chrome?.runtime?.sendMessage({
+      action: "restart_qr_timer",
+    });
+  };
+
   useEffect(() => {
     if (showLoader) {
       startTimer();
     }
     return () => clearInterval(timerRef.current);
-  }, [showLoader,isShow]);
+  }, [showLoader, isShow, currentStep]);
 
   // Calculate stroke-dashoffset for the red progress part
   const offset = circumference - (progress / 100) * circumference;
@@ -135,9 +139,12 @@ const NewCircularLoader = ({
               })
             : children}
           <CopyCodeButton
-            codeValue={codeValue}
+            copyCodeValue={copyCodeValue}
             className={cn(
-              "absolute bottom-[-50px] left-[110px] -scale-x-100 scale-y-100"
+              "absolute bottom-[-50px] left-[110px] -scale-x-100 scale-y-100",
+              {
+                hidden: !showLoader,
+              }
             )}
           />
         </div>

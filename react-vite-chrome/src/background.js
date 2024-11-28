@@ -1,6 +1,26 @@
 /* eslint-disable no-undef */
 console.log("hello from sw!!");
 
+const SCR_ONLINE = "assets/images/online48.png";
+const SCR_OFFLINE = "assets/images/offline48.png";
+
+function updateIconBasedOnCookie() {
+  chrome.cookies.get(
+    {
+      url: import.meta.env.VITE_CRED_BASE_URL,
+      name: import.meta.env.VITE_COOKIE_NAME,
+    },
+    (cookie) => {
+      if (cookie) {
+        chrome.action.setIcon({ path: SCR_ONLINE });
+      } else {
+        chrome.action.setIcon({ path: SCR_OFFLINE });
+      }
+    }
+  );
+}
+updateIconBasedOnCookie();
+
 let socket = null;
 
 async function getQidOrDid() {
@@ -31,14 +51,18 @@ async function getQidOrDid() {
   return data;
 }
 
-const Step = {
-  INIT: 1,
-  GET_QID_DID: 2,
-  WS_CONNECT: 3,
-};
-
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
   if (request.action === "open_popup") {
+    const { User } = await chrome.storage.local.get("User");
+
+    if (User) {
+      chrome.runtime.sendMessage({
+        action: "userExistShowCreds",
+        user: User,
+      });
+      return;
+    }
+
     const authCodeData = await getQidOrDid();
 
     chrome.storage.local.set({
@@ -84,6 +108,22 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     }
   }
 
+  if (request.action === "restart_type_code_timer") {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      const message = {
+        op: "DID",
+        value: scrambleState.qid,
+        org: scrambleState.code,
+        source: "PORTAL",
+        action: "PORTAL",
+        amznReqId: scrambleState.amznReqId,
+      };
+      socket.send(JSON.stringify(message));
+    } else {
+      console.error("WebSocket is not connected or is in a wrong state.");
+    }
+  }
+
   if (request.action === "switchCodeType") {
     const message = {
       op: request.codeType,
@@ -94,6 +134,30 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
       amznReqId: scrambleState.amznReqId,
     };
     socket.send(JSON.stringify(message));
+  }
+
+  if (request.action === "dropUserCreds") {
+    chrome.storage.local.clear(() => {
+      if (chrome.runtime.lastError) {
+        console.error("Error clearing storage:", chrome.runtime.lastError);
+      } else {
+        console.log("Local storage cleared successfully.");
+      }
+    });
+    chrome.cookies.remove(
+      {
+        url: import.meta.env.VITE_CRED_BASE_URL,
+        name: import.meta.env.VITE_COOKIE_NAME,
+      },
+      () => {
+        if (chrome.runtime.lastError) {
+          console.error("Error removing cookie:", chrome.runtime.lastError);
+        } else {
+          console.log("Cookie removed successfully.");
+          updateIconBasedOnCookie();
+        }
+      }
+    );
   }
 });
 
@@ -150,10 +214,23 @@ async function establishWsConnection(url) {
               )
                 .then((response) => response.json())
                 .then(async (data) => {
+                  // if (!data?.user) {
+                  //   await chrome.runtime.sendMessage({
+                  //     action: "error",
+                  //   });
+                  //   return;
+                  // }
+
                   await chrome.runtime.sendMessage({
                     action: "hideLoaderShowCredentials",
-                    user: data.user,
+                    user: data.user || "test",
                   });
+
+                  await chrome.storage.local.set({
+                    User: data?.user || null,
+                  });
+
+                  updateIconBasedOnCookie();
                 });
             } else {
               console.error("Error setting cookie");
@@ -166,7 +243,6 @@ async function establishWsConnection(url) {
     }
 
     if (wsIncomingMessage.op === "QID") {
-      // console.log(scrambleState)
       await chrome.storage.local.set({
         Auth: {
           scrambleState: { ...scrambleState, qid: wsIncomingMessage.value },
@@ -180,9 +256,51 @@ async function establishWsConnection(url) {
       });
     }
 
+    //this can cause message port disconnected error
+    if (wsIncomingMessage.op === "DID") {
+      //user has chosen typeCode
+      await chrome.storage.local.set({
+        Auth: {
+          scrambleState: { ...scrambleState, did: wsIncomingMessage.value },
+        },
+      });
+
+      await chrome.runtime.sendMessage({
+        action: "restartTypeCodeTimer",
+        newDid: wsIncomingMessage.value,
+        newCodeData: { ...scrambleState, did: wsIncomingMessage.value },
+      });
+    }
+
+    if (wsIncomingMessage.op === "validationCode") {
+      await chrome.storage.local.set({
+        Auth: {
+          scrambleState: {
+            ...scrambleState,
+            did: JSON.stringify(wsIncomingMessage.value),
+          },
+        },
+      });
+
+      await chrome.runtime.sendMessage({
+        action: "validationCodeReceived",
+        newDid: wsIncomingMessage.value,
+        newCodeData: {
+          ...scrambleState,
+          did: JSON.stringify(wsIncomingMessage.value),
+        },
+      });
+    }
+
     if (wsIncomingMessage.op === "NO_CONSENT") {
       await chrome.runtime.sendMessage({
         action: "refreshCodeNoConsent",
+      });
+    }
+
+    if (wsIncomingMessage.op === "refreshError") {
+      await chrome.runtime.sendMessage({
+        action: "error",
       });
     }
   });

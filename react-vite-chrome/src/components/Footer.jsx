@@ -1,10 +1,16 @@
-import { useState } from "react";
 import { cn } from "../utils/cn";
 import ToggleButton from "./utils/ToggleButton";
 import PropTypes from "prop-types";
 
 const Footer = (props) => {
   const { codeType, setCodeType } = props;
+
+  const onClickRemoveCreds = async () => {
+    await chrome.runtime.sendMessage({
+      action: "dropUserCreds",
+    });
+    await window.close();
+  };
 
   const onToggle = async () => {
     const newCodeType = codeType === "qrCode" ? "typeCode" : "qrCode";
@@ -18,22 +24,36 @@ const Footer = (props) => {
   };
 
   return (
-    <div className="flex justify-around py-6 text-lg">
-      <p
-        className={cn("font-semibold text-gray-500", {
-          "text-black dark:text-white": codeType === "qrCode",
+    <div className="py-6 text-lg">
+      <button
+        onClick={onClickRemoveCreds}
+        className={cn("text-white mx-auto text-center w-full", {
+          hidden: codeType,
         })}
       >
-        QR code
-      </p>
-      <ToggleButton isOn={codeType === "typeCode"} setIsOn={onToggle} />
-      <p
-        className={cn("font-semibold text-gray-500", {
-          "text-black dark:text-white": codeType === "typeCode",
+        Logout
+      </button>
+      <div
+        className={cn("flex justify-around", {
+          hidden: !codeType,
         })}
       >
-        Type code
-      </p>
+        <p
+          className={cn("font-semibold text-gray-500", {
+            "text-black dark:text-white": codeType === "qrCode",
+          })}
+        >
+          QR code
+        </p>
+        <ToggleButton isOn={codeType === "typeCode"} setIsOn={onToggle} />
+        <p
+          className={cn("font-semibold text-gray-500", {
+            "text-black dark:text-white": codeType === "typeCode",
+          })}
+        >
+          Type code
+        </p>
+      </div>
     </div>
   );
 };

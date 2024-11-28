@@ -4,7 +4,7 @@ import PropTypes from "prop-types";
 import { cn } from "../../utils/cn";
 
 const RectangularProgressbar = (props) => {
-  const { children, isShow } = props;
+  const { children, isShow, currentStep, code } = props;
 
   const width = 104.7;
   const height = 42.5;
@@ -17,7 +17,7 @@ const RectangularProgressbar = (props) => {
   const timerRef = useRef(null);
 
   const startTimer = () => {
-    setProgress(100); // Reset progress to 100%
+    setProgress(100);
     setShowQrMask(false);
     clearInterval(timerRef.current);
 
@@ -36,10 +36,16 @@ const RectangularProgressbar = (props) => {
     }, 1000 / 60);
   };
 
+  const onResetTimer = async () => {
+    await chrome?.runtime?.sendMessage({
+      action: "restart_type_code_timer",
+    });
+  };
+
   useEffect(() => {
     startTimer();
     return () => clearInterval(timerRef.current);
-  }, []);
+  }, [isShow, code]);
 
   // Calculate the stroke-dashoffset for the progress bar
   // const strokeDashoffset = 400 - (progress / 100) * 500;
@@ -74,7 +80,7 @@ const RectangularProgressbar = (props) => {
         <rect
           width={width}
           height={height}
-          strokeWidth={strokeWidth +0.2}
+          strokeWidth={strokeWidth + 0.2}
           x={10}
           y={10}
           fill="none"
@@ -92,13 +98,16 @@ const RectangularProgressbar = (props) => {
       <div className="typeCode">
         {React.isValidElement(children)
           ? React.cloneElement(children, {
-              onResetTimer: startTimer,
+              onResetTimer,
               showQrMask,
             })
           : children}
       </div>
 
-      <CopyCodeButton className="absolute bottom-[43px] left-[131px]" />
+      <CopyCodeButton
+        className="absolute bottom-[43px] left-[131px]"
+        copyCodeValue={code}
+      />
     </div>
   );
 };
