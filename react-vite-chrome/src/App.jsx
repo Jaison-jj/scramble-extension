@@ -20,8 +20,8 @@ function App() {
   const [codeType, setCodeType] = useState("qrCode");
   const [step, setStep] = useState("");
   const [creds, setCreds] = useState({
-    username: "nill",
-    password: "nil",
+    username: "empty",
+    password: "empty",
   });
   const [canShowCodeLoader, setCanShowCodeLoader] = useState(false);
   const [mask, setMask] = useState({

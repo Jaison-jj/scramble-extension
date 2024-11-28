@@ -30,7 +30,7 @@ const TextInput = (props) => {
 
       <button
         onClick={onClickCopy}
-        className="absolute top-[44px] right-[11px] active:scale-50 transition-transform duration-150  dark:bg-[#1f1f1f] px-1"
+        className="absolute top-[44px] right-[11px] active:scale-50 transition-transform duration-150 bg-[#f5f5f5]  dark:bg-[#1f1f1f] px-1"
       >
         <img src={CopyIcon} alt="copy" className="dark:invert-[1]" />
       </button>

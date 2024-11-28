@@ -105,6 +105,10 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
       socket.send(JSON.stringify(message));
     } else {
       console.error("WebSocket is not connected or is in a wrong state.");
+      await chrome.runtime.sendMessage({
+        action: "error",
+      });
+      return;
     }
   }
 
@@ -121,6 +125,9 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
       socket.send(JSON.stringify(message));
     } else {
       console.error("WebSocket is not connected or is in a wrong state.");
+      await chrome.runtime.sendMessage({
+        action: "error",
+      });
     }
   }
 
