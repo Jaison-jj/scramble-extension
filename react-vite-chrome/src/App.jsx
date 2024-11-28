@@ -18,7 +18,7 @@ import { cn } from "./utils/cn";
 function App() {
   const [codeData, setCodeData] = useState(null);
   const [codeType, setCodeType] = useState("qrCode");
-  const [step, setStep] = useState("showCredentials");
+  const [step, setStep] = useState("");
   const [creds, setCreds] = useState({
     username: "nill",
     password: "nil",
