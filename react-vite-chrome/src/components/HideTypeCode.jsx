@@ -11,7 +11,7 @@ const HideTypeCode = ({ className, icon, text, isShow, onResetTimer }) => {
         { hidden: !isShow }
       )}
     >
-      <img src={icon} alt="refresh" className="" />
+      <img src={icon} alt="refresh" className="invert-[1] dark:invert-0" />
       <p className="font-semibold text-lg dark:text-white">{text}</p>
     </div>
   );

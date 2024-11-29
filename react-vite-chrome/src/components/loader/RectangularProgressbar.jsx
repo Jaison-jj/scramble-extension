@@ -87,7 +87,7 @@ const RectangularProgressbar = (props) => {
           strokeDasharray={perimeter}
           strokeDashoffset={offset}
           strokeLinecap="square"
-          className="#f8efc4 dark:stroke-[#4d4623]"
+          className="stroke-[#f8efc4] dark:stroke-[#4d4623]"
           // style={
           //   {
           //     strokeDashoffset: "calc((1 - var(--progress)) * (-400))",

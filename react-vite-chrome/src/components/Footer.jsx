@@ -27,7 +27,7 @@ const Footer = (props) => {
     <div className="py-6 text-lg">
       <button
         onClick={onClickRemoveCreds}
-        className={cn("text-white mx-auto text-center w-full", {
+        className={cn("dark:text-white  mx-auto text-center w-full", {
           hidden: codeType,
         })}
       >

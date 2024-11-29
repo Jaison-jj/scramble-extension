@@ -68,6 +68,8 @@ const NewCircularLoader = ({
   // Calculate stroke-dashoffset for the red progress part
   const offset = circumference - (progress / 100) * circumference;
 
+  console.log(showLoader);
+
   return (
     <div
       className={cn(
