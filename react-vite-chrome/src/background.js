@@ -373,7 +373,6 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
                   action: "hideLoaderShowCredentials",
                   user: res?.user || null,
                 });
-                console.log("intervalId", intervalId);
               } else {
                 await chrome.runtime.sendMessage({
                   action: "error",
@@ -381,7 +380,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
               }
             }, 120000);
 
-            clearIntervalRecallCredsApi(intervalId);
+            // clearIntervalRecallCredsApi(intervalId);
           }
           clearIntervalRecallCredsApi(intervalId);
         }
