@@ -61,7 +61,7 @@ function App() {
             text: "Refresh code",
             icon: RefreshIcon,
           });
-          canShowCodeLoader(false);
+          setCanShowCodeLoader(false);
           break;
 
         case "callingCredentialsApi":
