@@ -71,7 +71,6 @@ function App() {
           break;
 
         case "hideLoaderShowCredentials":
-          console.log("req", request);
           setStep("showCredentials");
           setCodeType("");
           setCodeData(null);
@@ -111,6 +110,14 @@ function App() {
           setStep("error");
           break;
 
+        case "waitingForWsConnection":
+          setStep("waitingForWsConnection");
+          break;
+
+        case "wsConnectionSuccess":
+          setStep("");
+          break;
+
         default:
           break;
       }
@@ -130,7 +137,7 @@ function App() {
   const renderCode = codeData ? (
     <>
       <NewCircularLoader
-        isShow={codeType === "qrCode"}
+        isShow={codeType === "qrCode" && step !== "waitingForWsConnection"}
         showQrMask={mask.showMask}
         showLoader={canShowCodeLoader}
         setCanShowCodeLoader={setCanShowCodeLoader}
@@ -147,7 +154,7 @@ function App() {
         />
       </NewCircularLoader>
       <RectangularProgressbar
-        isShow={codeType === "typeCode"}
+        isShow={codeType === "typeCode" && step !== "waitingForWsConnection"}
         currentStep={step}
         code={codeData?.did}
       >
@@ -171,7 +178,10 @@ function App() {
     <div className="w-[340px] min-h-[424px] font-switzer dark:bg-black flex flex-col">
       <Header />
       <div className="flex-grow flex">{renderCode}</div>
-      <Loader isShow={step === "callingCredsApi"} />
+      <Loader
+        className={step === "waitingForWsConnection" ? "h-[408px]" : ""}
+        isShow={step === "callingCredsApi" || step === "waitingForWsConnection"}
+      />
       <Credentials
         isShow={step === "showCredentials"}
         userId={creds.username}

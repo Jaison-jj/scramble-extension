@@ -22,6 +22,7 @@ function updateIconBasedOnCookie() {
 updateIconBasedOnCookie();
 
 let socket = null;
+let isWsLoading = true;
 
 async function getQidOrDid() {
   const res = await fetch(
@@ -168,15 +169,48 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
   }
 });
 
+async function getCredentials() {
+  const url = `${
+    import.meta.env.VITE_CRED_BASE_URL
+  }/api/v1/lid/start-session/ZGVtfHxsZGFwYXBwMQ`;
+  const options = {
+    method: "POST",
+    credentials: "include",
+  };
+
+  try {
+    const response = await fetch(url, options);
+    await chrome.runtime.sendMessage({
+      action: "callingCredentialsApi",
+    });
+    if (!response.ok) {
+      throw new Error(`Fetch failed with status: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    // console.error("Fetch error:", error);
+    // throw error;
+  }
+}
+
+
 async function establishWsConnection(url) {
   socket = new WebSocket(url);
 
+  await chrome.runtime.sendMessage({
+    action: "waitingForWsConnection",
+  });
+  
   const {
     Auth: { scrambleState },
   } = await chrome.storage.local.get("Auth");
 
-  socket.addEventListener("open", () => {
+  socket.addEventListener("open", async() => {
     console.log("WebSocket connection established.");
+    isWsLoading = false
+    await chrome.runtime.sendMessage({
+      action: "wsConnectionSuccess",
+    });
   });
 
   socket.addEventListener("message", async (event) => {
@@ -197,8 +231,9 @@ async function establishWsConnection(url) {
           action: "callingCredentialsApi",
         });
 
-        const cookie = JSON.parse(wsIncomingMessage.value).cookie;
-        const cookieExpireAt = JSON.parse(wsIncomingMessage.value).expiresAt;
+        const { cookie, expiresAt: cookieExpireAt } = JSON.parse(
+          wsIncomingMessage.value
+        );
 
         chrome.cookies.set(
           {
@@ -207,45 +242,33 @@ async function establishWsConnection(url) {
             value: cookie,
             expirationDate: cookieExpireAt,
           },
-          async (cookie) => {
-            if (cookie) {
+          async (cookieSetResult) => {
+            if (cookieSetResult) {
               console.log("Cookie set successfully:");
-              await fetch(
-                `${
-                  import.meta.env.VITE_CRED_BASE_URL
-                }/api/v1/lid/start-session/ZGVtfHxsZGFwYXBwMQ`,
-                {
-                  method: "post",
-                  credentials: "include",
-                }
-              )
-                .then((response) => response.json())
-                .then(async (data) => {
-                  // if (!data?.user) {
-                  //   await chrome.runtime.sendMessage({
-                  //     action: "error",
-                  //   });
-                  //   return;
-                  // }
 
-                  await chrome.runtime.sendMessage({
-                    action: "hideLoaderShowCredentials",
-                    user: data.user || "test",
-                  });
+              try {
+                const data = await getCredentials();
 
-                  await chrome.storage.local.set({
-                    User: data?.user || null,
-                  });
-
-                  updateIconBasedOnCookie();
+                await chrome.runtime.sendMessage({
+                  action: "hideLoaderShowCredentials",
+                  user: data?.user || "test",
                 });
+
+                await chrome.storage.local.set({
+                  User: data?.user || null,
+                });
+
+                updateIconBasedOnCookie();
+              } catch (error) {
+                console.error("Error processing credentials API:", error);
+              }
             } else {
               console.error("Error setting cookie");
             }
           }
         );
-      } catch (err) {
-        console.log(err);
+      } catch (error) {
+        console.error("Error handling PORTAL operation:", error);
       }
     }
 
@@ -322,3 +345,50 @@ async function establishWsConnection(url) {
     );
   });
 }
+
+let intervalId = null;
+function clearIntervalRecallCredsApi(intervalId) {
+  chrome.cookies.onChanged.addListener((changeInfo) => {
+    if (changeInfo.cookie.name === import.meta.env.VITE_COOKIE_NAME) {
+      console.log(changeInfo);
+      clearInterval(intervalId);
+    }
+  });
+}
+
+chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
+  switch (request.action) {
+    case "open_popup":
+      chrome.cookies.get(
+        {
+          url: import.meta.env.VITE_CRED_BASE_URL,
+          name: import.meta.env.VITE_COOKIE_NAME,
+        },
+        (cookie) => {
+          if (cookie?.name === import.meta.env.VITE_COOKIE_NAME) {
+            intervalId = setInterval(async () => {
+              const res = await getCredentials();
+              if (res?.user) {
+                await chrome.runtime.sendMessage({
+                  action: "hideLoaderShowCredentials",
+                  user: res?.user || null,
+                });
+                console.log("intervalId", intervalId);
+              } else {
+                await chrome.runtime.sendMessage({
+                  action: "error",
+                });
+              }
+            }, 120000);
+
+            clearIntervalRecallCredsApi(intervalId);
+          }
+          clearIntervalRecallCredsApi(intervalId);
+        }
+      );
+      break;
+
+    default:
+      //some logic in the future
+  }
+});
