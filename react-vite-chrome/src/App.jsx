@@ -40,6 +40,7 @@ function App() {
     chrome?.runtime?.sendMessage({ action: "open_popup" });
 
     const handleMessages = (request) => {
+      console.log("currentAction", request.action);
       switch (request.action) {
         case "transfer_auth_code":
           setCodeData(request.authCodeData);
