@@ -4,21 +4,26 @@ console.log("hello from sw!!");
 const SCR_ONLINE = "assets/images/online48.png";
 const SCR_OFFLINE = "assets/images/offline48.png";
 
-function updateIconBasedOnCookie() {
-  chrome.cookies.get(
-    {
-      url: import.meta.env.VITE_CRED_BASE_URL,
-      name: import.meta.env.VITE_COOKIE_NAME,
-    },
-    (cookie) => {
-      if (cookie) {
-        chrome.action.setIcon({ path: SCR_ONLINE });
-      } else {
-        chrome.action.setIcon({ path: SCR_OFFLINE });
-      }
-    }
+async function updateIconBasedOnCookie() {
+  const cookie = await new Promise((resolve) =>
+    chrome.cookies.get(
+      {
+        url: import.meta.env.VITE_CRED_BASE_URL,
+        name: import.meta.env.VITE_COOKIE_NAME,
+      },
+      resolve
+    )
   );
+
+  if (cookie) {
+    chrome.action.setIcon({ path: SCR_ONLINE });
+    return true;
+  } else {
+    chrome.action.setIcon({ path: SCR_OFFLINE });
+    return false;
+  }
 }
+
 updateIconBasedOnCookie();
 
 let socket = null;
@@ -53,14 +58,16 @@ async function getQidOrDid() {
 }
 
 chrome.runtime.onMessage.addListener(async (request) => {
+  const hasCookie = await updateIconBasedOnCookie();
+
   const { timerElapsed = null } = await chrome.storage.local.get(
     "timerElapsed"
   );
-  
+
   console.log("timerElapsedStorage", timerElapsed);
-  
-  if (request.action === "open_popup" && timerElapsed) {
-  chrome.storage.local.set({ timerElapsed: false });
+
+  if (request.action === "open_popup" && timerElapsed && hasCookie) {
+    chrome.storage.local.set({ timerElapsed: false });
     await processCredentials();
     return;
   }
