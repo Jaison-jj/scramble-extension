@@ -22,7 +22,7 @@ function updateIconBasedOnCookie() {
 updateIconBasedOnCookie();
 
 let socket = null;
-let isWsLoading = true;
+let timerElapsed = false;
 
 async function getQidOrDid() {
   const res = await fetch(
@@ -52,7 +52,13 @@ async function getQidOrDid() {
   return data;
 }
 
-chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener(async (request) => {
+  if (request.action === "open_popup" && timerElapsed) {
+    timerElapsed = false;
+    await processCredentials();
+    return
+  }
+
   if (request.action === "open_popup") {
     const { User } = await chrome.storage.local.get("User");
 
@@ -145,6 +151,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
   }
 
   if (request.action === "dropUserCreds") {
+    timerElapsed = false
     chrome.storage.local.clear(() => {
       if (chrome.runtime.lastError) {
         console.error("Error clearing storage:", chrome.runtime.lastError);
@@ -188,11 +195,33 @@ async function getCredentials() {
     }
     return await response.json();
   } catch (error) {
-    // console.error("Fetch error:", error);
+    console.error("Fetch error:", error);
     // throw error;
   }
 }
 
+async function processCredentials() {
+  try {
+    const data = await getCredentials();
+
+    await chrome.runtime.sendMessage({
+      action: "hideLoaderShowCredentials",
+      user: data?.user || "test",
+    });
+
+    await chrome.storage.local.set({
+      User: data?.user || null,
+    });
+
+    updateIconBasedOnCookie();
+
+    setTimeout(() => {
+      timerElapsed = true;
+    }, 120000);
+  } catch (error) {
+    console.error("Error processing credentials API:", error);
+  }
+}
 
 async function establishWsConnection(url) {
   socket = new WebSocket(url);
@@ -200,14 +229,13 @@ async function establishWsConnection(url) {
   await chrome.runtime.sendMessage({
     action: "waitingForWsConnection",
   });
-  
+
   const {
     Auth: { scrambleState },
   } = await chrome.storage.local.get("Auth");
 
-  socket.addEventListener("open", async() => {
+  socket.addEventListener("open", async () => {
     console.log("WebSocket connection established.");
-    isWsLoading = false
     await chrome.runtime.sendMessage({
       action: "wsConnectionSuccess",
     });
@@ -218,120 +246,105 @@ async function establishWsConnection(url) {
 
     console.log("wsIncomingMessage,", wsIncomingMessage);
 
-    if (wsIncomingMessage.op === "WaitForConfirm") {
-      await chrome.runtime.sendMessage({
-        action: "waitingForConfirmationFromMob",
-        wsEvent: wsIncomingMessage,
-      });
-    }
-
-    if (wsIncomingMessage.op === "PORTAL") {
-      try {
+    switch (wsIncomingMessage.op) {
+      case "WaitForConfirm":
         await chrome.runtime.sendMessage({
-          action: "callingCredentialsApi",
+          action: "waitingForConfirmationFromMob",
+          wsEvent: wsIncomingMessage,
         });
+        break;
 
-        const { cookie, expiresAt: cookieExpireAt } = JSON.parse(
-          wsIncomingMessage.value
-        );
+      case "PORTAL":
+        try {
+          await chrome.runtime.sendMessage({
+            action: "callingCredentialsApi",
+          });
 
-        chrome.cookies.set(
-          {
-            url: import.meta.env.VITE_CRED_BASE_URL,
-            name: import.meta.env.VITE_COOKIE_NAME,
-            value: cookie,
-            expirationDate: cookieExpireAt,
-          },
-          async (cookieSetResult) => {
-            if (cookieSetResult) {
-              console.log("Cookie set successfully:");
+          const { cookie, expiresAt: cookieExpireAt } = JSON.parse(
+            wsIncomingMessage.value
+          );
 
-              try {
-                const data = await getCredentials();
-
-                await chrome.runtime.sendMessage({
-                  action: "hideLoaderShowCredentials",
-                  user: data?.user || "test",
-                });
-
-                await chrome.storage.local.set({
-                  User: data?.user || null,
-                });
-
-                updateIconBasedOnCookie();
-              } catch (error) {
-                console.error("Error processing credentials API:", error);
+          chrome.cookies.set(
+            {
+              url: import.meta.env.VITE_CRED_BASE_URL,
+              name: import.meta.env.VITE_COOKIE_NAME,
+              value: cookie,
+              expirationDate: cookieExpireAt,
+            },
+            async (cookieSetResult) => {
+              if (cookieSetResult) {
+                console.log("Cookie set successfully:");
+                await processCredentials();
+              } else {
+                console.error("Error setting cookie");
               }
-            } else {
-              console.error("Error setting cookie");
             }
-          }
-        );
-      } catch (error) {
-        console.error("Error handling PORTAL operation:", error);
-      }
-    }
+          );
+        } catch (error) {
+          console.error("Error handling PORTAL operation:", error);
+        }
+        break;
 
-    if (wsIncomingMessage.op === "QID") {
-      await chrome.storage.local.set({
-        Auth: {
-          scrambleState: { ...scrambleState, qid: wsIncomingMessage.value },
-        },
-      });
+      case "QID":
+        await chrome.storage.local.set({
+          Auth: {
+            scrambleState: { ...scrambleState, qid: wsIncomingMessage.value },
+          },
+        });
+        await chrome.runtime.sendMessage({
+          action: "restartQrTimer",
+          newQid: wsIncomingMessage.value,
+          newCodeData: { ...scrambleState, qid: wsIncomingMessage.value },
+        });
+        break;
 
-      await chrome.runtime.sendMessage({
-        action: "restartQrTimer",
-        newQid: wsIncomingMessage.value,
-        newCodeData: { ...scrambleState, qid: wsIncomingMessage.value },
-      });
-    }
+      case "DID":
+        await chrome.storage.local.set({
+          Auth: {
+            scrambleState: { ...scrambleState, did: wsIncomingMessage.value },
+          },
+        });
+        await chrome.runtime.sendMessage({
+          action: "restartTypeCodeTimer",
+          newDid: wsIncomingMessage.value,
+          newCodeData: { ...scrambleState, did: wsIncomingMessage.value },
+        });
+        break;
 
-    //this can cause message port disconnected error
-    if (wsIncomingMessage.op === "DID") {
-      //user has chosen typeCode
-      await chrome.storage.local.set({
-        Auth: {
-          scrambleState: { ...scrambleState, did: wsIncomingMessage.value },
-        },
-      });
-
-      await chrome.runtime.sendMessage({
-        action: "restartTypeCodeTimer",
-        newDid: wsIncomingMessage.value,
-        newCodeData: { ...scrambleState, did: wsIncomingMessage.value },
-      });
-    }
-
-    if (wsIncomingMessage.op === "validationCode") {
-      await chrome.storage.local.set({
-        Auth: {
-          scrambleState: {
+      case "validationCode":
+        await chrome.storage.local.set({
+          Auth: {
+            scrambleState: {
+              ...scrambleState,
+              did: JSON.stringify(wsIncomingMessage.value),
+            },
+          },
+        });
+        await chrome.runtime.sendMessage({
+          action: "validationCodeReceived",
+          newDid: wsIncomingMessage.value,
+          newCodeData: {
             ...scrambleState,
             did: JSON.stringify(wsIncomingMessage.value),
           },
-        },
-      });
+        });
+        break;
 
-      await chrome.runtime.sendMessage({
-        action: "validationCodeReceived",
-        newDid: wsIncomingMessage.value,
-        newCodeData: {
-          ...scrambleState,
-          did: JSON.stringify(wsIncomingMessage.value),
-        },
-      });
-    }
+      case "NO_CONSENT":
+        await chrome.runtime.sendMessage({
+          action: "refreshCodeNoConsent",
+        });
+        break;
 
-    if (wsIncomingMessage.op === "NO_CONSENT") {
-      await chrome.runtime.sendMessage({
-        action: "refreshCodeNoConsent",
-      });
-    }
+      case "refreshError":
+        await chrome.runtime.sendMessage({
+          action: "error",
+        });
+        break;
 
-    if (wsIncomingMessage.op === "refreshError") {
-      await chrome.runtime.sendMessage({
-        action: "error",
-      });
+      default:
+        console.warn(`Unhandled operation: ${wsIncomingMessage.op}`);
+        break;
     }
   });
 
@@ -345,49 +358,3 @@ async function establishWsConnection(url) {
     );
   });
 }
-
-let intervalId = null;
-function clearIntervalRecallCredsApi(intervalId) {
-  chrome.cookies.onChanged.addListener((changeInfo) => {
-    if (changeInfo.cookie.name === import.meta.env.VITE_COOKIE_NAME) {
-      console.log(changeInfo);
-      clearInterval(intervalId);
-    }
-  });
-}
-
-chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
-  switch (request.action) {
-    case "open_popup":
-      chrome.cookies.get(
-        {
-          url: import.meta.env.VITE_CRED_BASE_URL,
-          name: import.meta.env.VITE_COOKIE_NAME,
-        },
-        (cookie) => {
-          if (cookie?.name === import.meta.env.VITE_COOKIE_NAME) {
-            intervalId = setInterval(async () => {
-              const res = await getCredentials();
-              if (res?.user) {
-                await chrome.runtime.sendMessage({
-                  action: "hideLoaderShowCredentials",
-                  user: res?.user || null,
-                });
-              } else {
-                await chrome.runtime.sendMessage({
-                  action: "error",
-                });
-              }
-            }, 120000);
-
-            // clearIntervalRecallCredsApi(intervalId);
-          }
-          clearIntervalRecallCredsApi(intervalId);
-        }
-      );
-      break;
-
-    default:
-      //some logic in the future
-  }
-});

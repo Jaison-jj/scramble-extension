@@ -1,9 +1,8 @@
-import { useState } from "react";
 import { cn } from "../utils/cn";
 import TextInput from "./utils/TextInput";
+import PropTypes from "prop-types";
 
 const Credentials = ({ isShow, userId = "sample", password = "sample" }) => {
-
   return (
     <div
       className={cn(
@@ -26,7 +25,7 @@ const Credentials = ({ isShow, userId = "sample", password = "sample" }) => {
           value={userId}
         />
         <TextInput
-          type="password"
+          type="text"
           htmlFor="password"
           name="password"
           label="Password"
@@ -35,6 +34,12 @@ const Credentials = ({ isShow, userId = "sample", password = "sample" }) => {
       </div>
     </div>
   );
+};
+
+Credentials.propTypes = {
+  isShow: PropTypes.bool,
+  userId: PropTypes.string,
+  password: PropTypes.string,
 };
 
 export default Credentials;

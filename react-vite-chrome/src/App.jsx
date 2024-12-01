@@ -76,8 +76,8 @@ function App() {
           setCodeType("");
           setCodeData(null);
           setCreds({
-            username: request?.user?.userName || "lala",
-            password: request?.user?.password || "lala",
+            username: request?.user?.userName || "empty",
+            password: request?.user?.password || "empty",
           });
           break;
 

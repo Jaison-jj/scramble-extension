@@ -23,7 +23,7 @@ const TextInput = (props) => {
       </label>
       <input
         type={type}
-        placeholder="username"
+        placeholder={label}
         name={name}
         className="rounded-2xl w-full dark:text-white border border-[#E1E0DE] dark:border-[#E1E0DE1A] h-[60px] p-4 bg-transparent outline-none text-lg font-medium text-[#151515]"
         value={value}
@@ -31,9 +31,11 @@ const TextInput = (props) => {
         key={value}
       />
 
+{/*  */}
+
       <button
         onClick={() => onClickCopy(value)}
-        className="absolute top-[44px] right-[11px] bg-[#f5f5f5] dark:bg-[#1f1f1f]"
+        className="absolute top-[37px] right-[2px] bg-[#f5f5f5] dark:bg-[#1f1f1f] w-9 h-9 flex items-center justify-center"
       >
         <img src={CopyIcon} alt="copy" className="dark:invert-[1]" />
       </button>
