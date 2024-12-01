@@ -22,7 +22,7 @@ function updateIconBasedOnCookie() {
 updateIconBasedOnCookie();
 
 let socket = null;
-let timerElapsed = false;
+// let timerElapsed = false;
 
 async function getQidOrDid() {
   const res = await fetch(
@@ -53,10 +53,16 @@ async function getQidOrDid() {
 }
 
 chrome.runtime.onMessage.addListener(async (request) => {
+  const { timerElapsed = null } = await chrome.storage.local.get(
+    "timerElapsed"
+  );
+  
+  console.log("timerElapsedStorage", timerElapsed);
+  
   if (request.action === "open_popup" && timerElapsed) {
-    timerElapsed = false;
+  chrome.storage.local.set({ timerElapsed: false });
     await processCredentials();
-    return
+    return;
   }
 
   if (request.action === "open_popup") {
@@ -151,7 +157,8 @@ chrome.runtime.onMessage.addListener(async (request) => {
   }
 
   if (request.action === "dropUserCreds") {
-    timerElapsed = false
+    chrome.storage.local.set({ timerElapsed: false });
+
     chrome.storage.local.clear(() => {
       if (chrome.runtime.lastError) {
         console.error("Error clearing storage:", chrome.runtime.lastError);
@@ -216,8 +223,9 @@ async function processCredentials() {
     updateIconBasedOnCookie();
 
     setTimeout(() => {
-      timerElapsed = true;
-    }, 120000);
+      // timerElapsed = true;
+      chrome.storage.local.set({ timerElapsed: true });
+    }, 10000);
   } catch (error) {
     console.error("Error processing credentials API:", error);
   }
