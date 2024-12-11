@@ -4,76 +4,37 @@ console.log("hello from sw!!");
 const SCR_ONLINE = "assets/images/online48.png";
 const SCR_OFFLINE = "assets/images/offline48.png";
 
-let popupWindowId = null;
+async function executeScriptBeforeSendingMessage(tab) {
+  await chrome.scripting.executeScript({
+    target: { tabId: tab.id },
+    files: ["content.js"],
+  });
+}
 
-// detect visited page === https://example.com/ and open the popup
-
-// chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-//   if (changeInfo.status === "complete") {
-//     console.log("change info complete");
-
-//     if (tab.url && tab.url.includes("example.com")) {
-//       let queryOptions = { active: true, lastFocusedWindow: true };
-//       let [tab] = await chrome.tabs.query(queryOptions);
-
-//       await chrome.windows.getAll({ populate: true }, function (windows) {
-//         let popupFound = false;
-//         for (let window of windows) {
-//           if (window.type === "popup") {
-//             // Check for existing popups
-//             popupFound = true;
-//             break;
-//           }
-//         }
-//         // if (!popupFound) {
-//           // return //bypassed for REQUIREMENT #2
-//           chrome.windows.create(
-//             {
-//               url: "index.html",
-//               type: "popup",
-//               // top: 190,
-//               // width: tab.width,
-//               // height: tab.height - 36,
-//               width:356,
-//               height:650
-//             },
-//             (window) => {
-//               // chrome.windows.update(window.id, {
-//               //   width: 'screen.availWidth',
-//               //   height: 'screen.availHeight'
-//               // });
-//             }
-//           );
-//         // }
-//       });
-//     }
-//   }
-// });
+let popupWindowId = null
 
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (changeInfo.status === "complete") {
     console.log("change info complete");
 
     if (tab.url && tab.url.includes("demoguest.com")) {
-      let queryOptions = { active: true, lastFocusedWindow: true };
-      let [tab] = await chrome.tabs.query(queryOptions);
+      // let queryOptions = { active: true, lastFocusedWindow: true };
+      // let [tab] = await chrome.tabs.query(queryOptions);
+
 
       await chrome.windows.getAll({ populate: true }, function (windows) {
-        let popupFound = false;
+        // let popupFound = false;
         for (let window of windows) {
           if (window.type === "popup") {
-            // Check for existing popups
-            popupFound = true;
+            // popupFound = true;
             break;
           }
         }
 
-        // Get current window details to calculate position
         chrome.windows.getCurrent({ populate: true }, (currentWindow) => {
           const windowWidth = 356;
           const windowHeight = 597;
 
-          // Calculate the position for centering the popup
           const left =
             currentWindow.left +
             Math.floor((currentWindow.width - windowWidth) / 2);
@@ -91,9 +52,11 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
               top: top,
             },
             (window) => {
-              // Optionally, you can update the window properties here if needed.
-              console.log("windowId", window);
               popupWindowId = window.id ?? null;
+              // chrome.runtime.sendMessage({
+              //   action: "getExtensionWindowId",
+              //   id: window.id,
+              // });
             }
           );
         });
@@ -161,8 +124,6 @@ chrome.runtime.onMessage.addListener(async (request) => {
   const { timerElapsed = null } = await chrome.storage.local.get(
     "timerElapsed"
   );
-
-  console.log("timerElapsedStorage", timerElapsed);
 
   if (request.action === "open_popup" && timerElapsed && hasCookie) {
     chrome.storage.local.set({ timerElapsed: false });

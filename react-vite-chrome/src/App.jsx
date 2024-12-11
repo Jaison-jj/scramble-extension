@@ -15,7 +15,7 @@ import RefreshIcon from "./assets/icons/refresh.svg";
 import InvalidSession from "./components/InvalidSession";
 import { cn } from "./utils/cn";
 
-const extensionId = "ngflpkmfoihomkgegoieapmicdkgdjmc";
+let extensionId = null;
 
 function App() {
   const [codeData, setCodeData] = useState(null);
@@ -39,11 +39,18 @@ function App() {
   };
 
   useEffect(() => {
-    chrome?.runtime?.sendMessage(extensionId, { action: "open_popup" });
+    if (extensionId) {
+      chrome?.runtime?.sendMessage(extensionId, { action: "open_popup" });
+    } else {
+      chrome?.runtime?.sendMessage({ action: "open_popup" });
+    }
 
     const handleMessages = (request) => {
-      console.log("currentAction", request.action);
       switch (request.action) {
+        case "getExtensionWindowId":
+          extensionId = request.id;
+          break;
+
         case "transfer_auth_code":
           setCodeData(request.authCodeData);
           setCanShowCodeLoader(true);
