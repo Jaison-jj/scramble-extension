@@ -6,7 +6,7 @@ const Credentials = ({ isShow, userId = "sample", password = "sample" }) => {
   return (
     <div
       className={cn(
-        "hidden h-[344px] w-[95%] authBackground rounded-md mx-auto  flex-col items-start px-5 pt-[32px]",
+        "hidden h-[410px] w-[95%] authBackground rounded-md mx-auto  flex-col items-start px-5 pt-[32px]",
         {
           flex: isShow,
         }

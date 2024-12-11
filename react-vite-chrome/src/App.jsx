@@ -15,6 +15,8 @@ import RefreshIcon from "./assets/icons/refresh.svg";
 import InvalidSession from "./components/InvalidSession";
 import { cn } from "./utils/cn";
 
+const extensionId = "ngflpkmfoihomkgegoieapmicdkgdjmc";
+
 function App() {
   const [codeData, setCodeData] = useState(null);
   const [codeType, setCodeType] = useState("qrCode");
@@ -37,7 +39,7 @@ function App() {
   };
 
   useEffect(() => {
-    chrome?.runtime?.sendMessage({ action: "open_popup" });
+    chrome?.runtime?.sendMessage(extensionId, { action: "open_popup" });
 
     const handleMessages = (request) => {
       console.log("currentAction", request.action);
@@ -124,10 +126,10 @@ function App() {
       }
     };
 
-    chrome?.runtime?.onMessage.addListener(handleMessages);
+    chrome?.runtime?.onMessage?.addListener(handleMessages);
 
     return () => {
-      chrome?.runtime?.onMessage.removeListener(handleMessages);
+      chrome?.runtime?.onMessage?.removeListener(handleMessages);
     };
   }, []);
 

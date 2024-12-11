@@ -35,7 +35,7 @@ const Footer = (props) => {
       </button>
       <div
         className={cn("flex justify-around", {
-          hidden: !codeType,
+          "hidden": !codeType,
         })}
       >
         <p

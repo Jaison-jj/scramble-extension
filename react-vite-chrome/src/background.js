@@ -4,6 +4,104 @@ console.log("hello from sw!!");
 const SCR_ONLINE = "assets/images/online48.png";
 const SCR_OFFLINE = "assets/images/offline48.png";
 
+let popupWindowId = null;
+
+// detect visited page === https://example.com/ and open the popup
+
+// chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+//   if (changeInfo.status === "complete") {
+//     console.log("change info complete");
+
+//     if (tab.url && tab.url.includes("example.com")) {
+//       let queryOptions = { active: true, lastFocusedWindow: true };
+//       let [tab] = await chrome.tabs.query(queryOptions);
+
+//       await chrome.windows.getAll({ populate: true }, function (windows) {
+//         let popupFound = false;
+//         for (let window of windows) {
+//           if (window.type === "popup") {
+//             // Check for existing popups
+//             popupFound = true;
+//             break;
+//           }
+//         }
+//         // if (!popupFound) {
+//           // return //bypassed for REQUIREMENT #2
+//           chrome.windows.create(
+//             {
+//               url: "index.html",
+//               type: "popup",
+//               // top: 190,
+//               // width: tab.width,
+//               // height: tab.height - 36,
+//               width:356,
+//               height:650
+//             },
+//             (window) => {
+//               // chrome.windows.update(window.id, {
+//               //   width: 'screen.availWidth',
+//               //   height: 'screen.availHeight'
+//               // });
+//             }
+//           );
+//         // }
+//       });
+//     }
+//   }
+// });
+
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+  if (changeInfo.status === "complete") {
+    console.log("change info complete");
+
+    if (tab.url && tab.url.includes("demoguest.com")) {
+      let queryOptions = { active: true, lastFocusedWindow: true };
+      let [tab] = await chrome.tabs.query(queryOptions);
+
+      await chrome.windows.getAll({ populate: true }, function (windows) {
+        let popupFound = false;
+        for (let window of windows) {
+          if (window.type === "popup") {
+            // Check for existing popups
+            popupFound = true;
+            break;
+          }
+        }
+
+        // Get current window details to calculate position
+        chrome.windows.getCurrent({ populate: true }, (currentWindow) => {
+          const windowWidth = 356;
+          const windowHeight = 597;
+
+          // Calculate the position for centering the popup
+          const left =
+            currentWindow.left +
+            Math.floor((currentWindow.width - windowWidth) / 2);
+          const top =
+            currentWindow.top +
+            Math.floor((currentWindow.height - windowHeight) / 2);
+
+          chrome.windows.create(
+            {
+              url: "index.html",
+              type: "popup",
+              width: windowWidth,
+              height: windowHeight,
+              left: left,
+              top: top,
+            },
+            (window) => {
+              // Optionally, you can update the window properties here if needed.
+              console.log("windowId", window);
+              popupWindowId = window.id ?? null;
+            }
+          );
+        });
+      });
+    }
+  }
+});
+
 async function updateIconBasedOnCookie() {
   const cookie = await new Promise((resolve) =>
     chrome.cookies.get(
