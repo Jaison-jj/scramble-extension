@@ -45,11 +45,11 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
             top: top,
           },
           (window) => {
-            popupWindowId = window.id;
-            chrome.runtime.sendMessage({
-              action: "getExtensionWindowId",
-              id: window.id,
-            });
+            popupWindowId = window.id || null;
+            // chrome.runtime.sendMessage({
+            //   action: "getExtensionWindowId",
+            //   id: window.id,
+            // });
           }
         );
       });
