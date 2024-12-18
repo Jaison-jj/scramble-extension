@@ -4,23 +4,26 @@ console.log("hello from sw!!");
 const SCR_ONLINE = "assets/images/online48.png";
 const SCR_OFFLINE = "assets/images/offline48.png";
 
-async function executeScriptBeforeSendingMessage(tab) {
-  await chrome.scripting.executeScript({
-    target: { tabId: tab.id },
-    files: ["content.js"],
-  });
-}
+// async function executeScriptBeforeSendingMessage(tab) {
+//   await chrome.scripting.executeScript({
+//     target: { tabId: tab.id },
+//     files: ["content.js"],
+//   });
+// }
 
-let popupWindowId = null
+const checkUrlToOpenPopup = (tab) => {
+  return (
+    tab.url.includes("https://demoguest.com/demo/vdi/ldap") ||
+    tab.url.includes("https://demoguest.com/demo/vdi/radius")
+  );
+};
 
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (changeInfo.status === "complete") {
-    console.log("change info complete");
 
-    if (tab.url && tab.url.includes("demoguest.com")) {
+    if (tab.url && checkUrlToOpenPopup(tab)) {
       // let queryOptions = { active: true, lastFocusedWindow: true };
       // let [tab] = await chrome.tabs.query(queryOptions);
-
 
       await chrome.windows.getAll({ populate: true }, function (windows) {
         // let popupFound = false;
@@ -432,3 +435,7 @@ async function establishWsConnection(url) {
     );
   });
 }
+
+// open at center
+// when popup opens call credentials api
+// if cookie exipired redict user to login
