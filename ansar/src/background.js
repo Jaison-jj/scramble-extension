@@ -5,6 +5,7 @@ const SCR_ONLINE = "assets/images/online48.png";
 const SCR_OFFLINE = "assets/images/offline48.png";
 let eventData;
 
+let popupWindowId = null;
 
 const checkUrlToOpenPopup = (tab) => {
   return (
@@ -15,53 +16,47 @@ const checkUrlToOpenPopup = (tab) => {
 
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (changeInfo.status === "complete") {
-
     if (tab.url && checkUrlToOpenPopup(tab)) {
-      // let queryOptions = { active: true, lastFocusedWindow: true };
-      // let [tab] = await chrome.tabs.query(queryOptions);
-
-      await chrome.windows.getAll({ populate: true }, function (windows) {
-        // let popupFound = false;
-        for (let window of windows) {
-          if (window.type === "popup") {
-            // popupFound = true;
-            break;
-          }
-        }
-
-        chrome.windows.getCurrent({ populate: true }, (currentWindow) => {
-          const windowWidth = 356;
-          const windowHeight = 597;
-
-          const left =
-            currentWindow.left +
-            Math.floor((currentWindow.width - windowWidth) / 2);
-          const top =
-            currentWindow.top +
-            Math.floor((currentWindow.height - windowHeight) / 2);
-
-          chrome.windows.create(
-            {
-              url: "index.html",
-              type: "popup",
-              width: windowWidth,
-              height: windowHeight,
-              left: left,
-              top: top,
-            },
-            (window) => {
-              // popupWindowId = window.id ?? null;
-              // chrome.runtime.sendMessage({
-              //   action: "getExtensionWindowId",
-              //   id: window.id,
-              // });
-            }
-          );
+      // Close the existing popup if it exists
+      if (popupWindowId) {
+        chrome.windows.remove(popupWindowId, () => {
+          popupWindowId = null; 
         });
+      }
+
+      chrome.windows.getCurrent({ populate: true }, (currentWindow) => {
+        const windowWidth = 356;
+        const windowHeight = 597;
+
+        const left =
+          currentWindow.left +
+          Math.floor((currentWindow.width - windowWidth) / 2);
+        const top =
+          currentWindow.top +
+          Math.floor((currentWindow.height - windowHeight) / 2);
+
+        chrome.windows.create(
+          {
+            url: "index.html",
+            type: "popup",
+            width: windowWidth,
+            height: windowHeight,
+            left: left,
+            top: top,
+          },
+          (window) => {
+            popupWindowId = window.id;
+            chrome.runtime.sendMessage({
+              action: "getExtensionWindowId",
+              id: window.id,
+            });
+          }
+        );
       });
     }
   }
 });
+
 
 
 function updateIconBasedOnCookie() {
