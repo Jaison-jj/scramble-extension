@@ -1,26 +1,36 @@
-/* eslint-disable no-undef */
 console.log("hello from sw!!");
 
 const SCR_ONLINE = "assets/images/online48.png";
 const SCR_OFFLINE = "assets/images/offline48.png";
 let eventData;
-
 let popupWindowId = null;
+const autoPopupCheckUrls = [
+  "https://demoguest.com/demo/vdi/ldap",
+  "https://demoguest.com/demo/vdi/radius",
+  "https://demoguest.com/ukg/ldap/dWtnfHxsZGFwYXBwMQ",
+  "https://demoguest.com/ukg/radius/dWtnfHxyYWRpdXNhcHAx",
+  "https://demoguest.com/qa/ukg/ldap/dWtnfHxsZGFwYXBwMQ",
+  "https://demoguest.com/qa/ukg/radius/dWtnfHxyYWRpdXNhcHAx",
+  "https://demoguest.com/uat/ukg/ldap/dWtnfHxsZGFwYXBwMQ",
+  "https://demoguest.com/uat/ukg/radius/dWtnfHxyYWRpdXNhcHAx",
+  "https://demoguest.com/prod/ukg/ldap/dWtnfHxsZGFwYXBwMQ",
+  "https://demoguest.com/prod/ukg/radius/dWtnfHxyYWRpdXNhcHAx",
+];
 
 const checkUrlToOpenPopup = (tab) => {
-  return (
-    tab.url.includes("https://demoguest.com/demo/vdi/ldap") ||
-    tab.url.includes("https://demoguest.com/demo/vdi/radius")
-  );
+  return autoPopupCheckUrls.some((url) => tab.url === url);
 };
 
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (changeInfo.status === "complete") {
-    if (tab.url && checkUrlToOpenPopup(tab)) {
+    const { isAutoPopup } =
+      (await chrome.storage.local.get("isAutoPopup")) || false;
+
+    if (tab.url && checkUrlToOpenPopup(tab) && isAutoPopup) {
       // Close the existing popup if it exists
       if (popupWindowId) {
         chrome.windows.remove(popupWindowId, () => {
-          popupWindowId = null; 
+          popupWindowId = null;
         });
       }
 
@@ -45,7 +55,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
             top: top,
           },
           (window) => {
-            popupWindowId = window.id || null;
+            popupWindowId = window?.id || null;
             // chrome.runtime.sendMessage({
             //   action: "getExtensionWindowId",
             //   id: window.id,
@@ -56,8 +66,6 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     }
   }
 });
-
-
 
 function updateIconBasedOnCookie() {
   chrome.cookies.get(
@@ -80,7 +88,8 @@ let socket = null;
 
 async function getQidOrDid() {
   const res = await fetch(
-    `https://wsp2.${import.meta.env.VITE_SUBDOMAIN
+    `https://wsp2.${
+      import.meta.env.VITE_SUBDOMAIN
     }.scrambleid.com/login/portal/ZGVtfHxkZW0tcG9ydGFs?format=json`,
     {
       headers: {
@@ -114,10 +123,13 @@ async function configureLogin() {
   });
 
   const epochTime = Math.floor(Date.now() / 1000) * 1000;
-  const wsUrl = `wss://wsp.${import.meta.env.VITE_SUBDOMAIN
-    }.scrambleid.com/v1?action=PORTAL&qid=${authCodeData?.qid}&did=${authCodeData.did
-    }&org=${authCodeData?.code}&epoch=${epochTime}&amznReqId=${authCodeData?.amznReqId
-    }`;
+  const wsUrl = `wss://wsp.${
+    import.meta.env.VITE_SUBDOMAIN
+  }.scrambleid.com/v1?action=PORTAL&qid=${authCodeData?.qid}&did=${
+    authCodeData.did
+  }&org=${authCodeData?.code}&epoch=${epochTime}&amznReqId=${
+    authCodeData?.amznReqId
+  }`;
 
   await establishWsConnection(wsUrl);
 
@@ -127,8 +139,13 @@ async function configureLogin() {
   });
 }
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
-  if (request.action === "open_popup") {
+  if (request.action === "saveUserSettingForAutoPopup") {
+    console.log("Received user setting:", request.enableAuto);
+    chrome.storage.local.set({ isAutoPopup: request.enableAuto });
+    return;
+  }
 
+  if (request.action === "open_popup") {
     chrome.cookies.get(
       {
         url: import.meta.env.VITE_CRED_BASE_URL,
@@ -146,7 +163,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         const { User } = await chrome.storage.local.get("User");
 
         if (cookie && !isCookieValueExpired(cookie)) {
-          fetchUserNew()
+          fetchUserNew();
           return;
         }
 
@@ -163,7 +180,8 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
             return;
           }
         }
-      })
+      }
+    );
     const { User } = await chrome.storage.local.get("User");
 
     if (User) {
@@ -174,7 +192,6 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
       return;
     }
     await configureLogin();
-
   }
 
   const {
@@ -274,7 +291,7 @@ async function establishWsConnection(url) {
 
   socket.addEventListener("message", async (event) => {
     const wsIncomingMessage = JSON.parse(event.data);
-    eventData = event
+    eventData = event;
 
     console.log("wsIncomingMessage,", wsIncomingMessage);
 
@@ -286,7 +303,7 @@ async function establishWsConnection(url) {
     }
 
     if (wsIncomingMessage.op === "PORTAL") {
-      fetchUserCredentials()
+      fetchUserCredentials();
     }
 
     if (wsIncomingMessage.op === "QID") {
@@ -385,7 +402,8 @@ const fetchUserCredentials = async () => {
         if (cookie) {
           console.log("Cookie set successfully:");
           await fetch(
-            `${import.meta.env.VITE_CRED_BASE_URL
+            `${
+              import.meta.env.VITE_CRED_BASE_URL
             }/api/v1/lid/start-session/ZGVtfHxsZGFwYXBwMQ`,
             {
               method: "post",
@@ -421,7 +439,7 @@ const fetchUserCredentials = async () => {
   } catch (err) {
     console.log(err);
   }
-}
+};
 
 const fetchUserNew = async () => {
   try {
@@ -430,7 +448,8 @@ const fetchUserNew = async () => {
     });
 
     await fetch(
-      `${import.meta.env.VITE_CRED_BASE_URL
+      `${
+        import.meta.env.VITE_CRED_BASE_URL
       }/api/v1/lid/start-session/ZGVtfHxsZGFwYXBwMQ`,
       {
         method: "post",
@@ -439,7 +458,6 @@ const fetchUserNew = async () => {
     )
       .then((response) => response.json())
       .then(async (data) => {
-
         if (!data?.user) {
           //If api returns a cookie error delete user and start login.
           await chrome.runtime.sendMessage({
@@ -462,13 +480,13 @@ const fetchUserNew = async () => {
   } catch (err) {
     console.log(err);
   }
-}
+};
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {
-  if (alarm.name === 'timerAlarm') {
+  if (alarm.name === "timerAlarm") {
     // Logic to execute when the timer alarm goes off
-    console.log('Timer finished!');
-    fetchUserNew()
+    console.log("Timer finished!");
+    fetchUserNew();
   }
 });
 
@@ -479,21 +497,21 @@ async function startTimerAlarm(duration) {
   const now = Date.now();
 
   // Calculate the time that is 2 minutes from now in milliseconds
-  const twoMinutesFromNow = now + (2 * 60 * 1000); // 2 minutes in milliseconds
+  const twoMinutesFromNow = now + 2 * 60 * 1000; // 2 minutes in milliseconds
   await chrome.storage.local.set({
     startTime: now,
-    endTime: twoMinutesFromNow
+    endTime: twoMinutesFromNow,
   });
-  chrome.alarms.create('timerAlarm', { delayInMinutes: duration });
+  chrome.alarms.create("timerAlarm", { delayInMinutes: duration });
 }
 
 // Function to stop the timer
 function stopTimer() {
-  chrome.alarms.clear('timerAlarm', (wasCleared) => {
+  chrome.alarms.clear("timerAlarm", (wasCleared) => {
     if (wasCleared) {
-      console.log('Timer stopped successfully.');
+      console.log("Timer stopped successfully.");
     } else {
-      console.log('No timer was running.');
+      console.log("No timer was running.");
     }
   });
 }
