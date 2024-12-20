@@ -3,7 +3,7 @@ import ToggleButton from "./utils/ToggleButton";
 import PropTypes from "prop-types";
 
 const Footer = (props) => {
-  const { codeType, setCodeType } = props;
+  const { codeType, setCodeType, closeText="Logout" } = props;
 
   const onClickRemoveCreds = async () => {
     await chrome.runtime.sendMessage({
@@ -31,7 +31,7 @@ const Footer = (props) => {
           hidden: codeType,
         })}
       >
-        Logout
+        {closeText}
       </button>
       <div
         className={cn("flex justify-around", {

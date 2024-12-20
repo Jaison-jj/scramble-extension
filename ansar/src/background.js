@@ -4,27 +4,36 @@ const SCR_ONLINE = "assets/images/online48.png";
 const SCR_OFFLINE = "assets/images/offline48.png";
 let eventData;
 let popupWindowId = null;
+let popupOpenedSiteTab = null;
 const autoPopupCheckUrls = [
   "https://demoguest.com/demo/vdi/ldap",
   "https://demoguest.com/demo/vdi/radius",
-  "https://demoguest.com/ukg/ldap/dWtnfHxsZGFwYXBwMQ",
-  "https://demoguest.com/ukg/radius/dWtnfHxyYWRpdXNhcHAx",
-  "https://demoguest.com/qa/ukg/ldap/dWtnfHxsZGFwYXBwMQ",
-  "https://demoguest.com/qa/ukg/radius/dWtnfHxyYWRpdXNhcHAx",
-  "https://demoguest.com/uat/ukg/ldap/dWtnfHxsZGFwYXBwMQ",
-  "https://demoguest.com/uat/ukg/radius/dWtnfHxyYWRpdXNhcHAx",
-  "https://demoguest.com/prod/ukg/ldap/dWtnfHxsZGFwYXBwMQ",
-  "https://demoguest.com/prod/ukg/radius/dWtnfHxyYWRpdXNhcHAx",
+  "https://demoguest.com/ukg/ldap",
+  "https://demoguest.com/ukg/radius",
+  "https://demoguest.com/qa/ukg/ldap",
+  "https://demoguest.com/qa/ukg/radius",
+  "https://demoguest.com/demo/ukg/ldap",
+  "https://demoguest.com/demo/ukg/radius",
+  "https://demoguest.com/uat/ukg/ldap",
+  "https://demoguest.com/uat/ukg/radius",
+  "https://demoguest.com/prod/ukg/ldap",
+  "https://demoguest.com/prod/ukg/radius",
 ];
 
 const checkUrlToOpenPopup = (tab) => {
   return autoPopupCheckUrls.some((url) => tab.url === url);
 };
 
+chrome.windows.onRemoved.addListener((wind) => {
+  popupWindowId = null;
+});
+
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (changeInfo.status === "complete") {
     const { isAutoPopup } =
       (await chrome.storage.local.get("isAutoPopup")) || false;
+
+    popupOpenedSiteTab = tab;
 
     if (tab.url && checkUrlToOpenPopup(tab) && isAutoPopup) {
       // Close the existing popup if it exists
@@ -65,6 +74,15 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
       });
     }
   }
+});
+
+chrome.tabs.onActivated.addListener((activeInfo) => {
+  chrome.tabs.get(activeInfo.tabId, (tab) => {
+    if (tab && tab.url) {
+      popupOpenedSiteTab = tab;
+      // console.log(tab);
+    }
+  });
 });
 
 function updateIconBasedOnCookie() {
@@ -140,12 +158,21 @@ async function configureLogin() {
 }
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
   if (request.action === "saveUserSettingForAutoPopup") {
-    console.log("Received user setting:", request.enableAuto);
     chrome.storage.local.set({ isAutoPopup: request.enableAuto });
     return;
   }
 
   if (request.action === "open_popup") {
+    // console.log("currentTab", popupOpenedSiteTab);
+    // console.log("canOpen", checkUrlToOpenPopup(popupOpenedSiteTab));
+
+    // if (!checkUrlToOpenPopup(popupOpenedSiteTab)) {
+    //   chrome.runtime.sendMessage({
+    //     action: "unsupportedSite",
+    //   });
+    //   return;
+    // }
+
     chrome.cookies.get(
       {
         url: import.meta.env.VITE_CRED_BASE_URL,
@@ -153,7 +180,6 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
       },
       async (cookie) => {
         if (!cookie || isCookieValueExpired(cookie)) {
-          //Cookie expired
           await chrome.storage.local.set({
             User: null,
           });
@@ -170,8 +196,6 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         const endTime = await chrome.storage.local.get("endTime");
         const now = Date.now();
         const epochTime = Math.floor(Date.now() / 1000) * 1000;
-        console.log(now);
-        console.log(endTime.endTime);
 
         if (endTime) {
           if (endTime.endTime < now) {
@@ -408,9 +432,24 @@ const fetchUserCredentials = async () => {
             {
               method: "post",
               credentials: "include",
+              // body: JSON.stringify({
+              //   appUrl: popupOpenedSiteTab.url,
+              // }),
             }
           )
-            .then((response) => response.json())
+            .then(async (response) => {
+              if (!response.ok) {
+                // throw new Error(
+                //   `HTTP error! Status: ${response.status} ${response.statusText}`
+                // );
+                await chrome.runtime.sendMessage({
+                  action: "unsupportedSite",
+                });
+                return;
+                //instead of throwing error show api failed ui,remove the cookie as well
+              }
+              return response.json();
+            })
             .then(async (data) => {
               // if (!data?.user) {
               //   await chrome.runtime.sendMessage({
@@ -430,6 +469,10 @@ const fetchUserCredentials = async () => {
 
               updateIconBasedOnCookie();
               startTimerAlarm(2);
+            })
+            .catch((err) => {
+              console.log("fetchUserCredentials", err);
+              //go to some error page
             });
         } else {
           console.error("Error setting cookie");
@@ -454,12 +497,26 @@ const fetchUserNew = async () => {
       {
         method: "post",
         credentials: "include",
+        // body: JSON.stringify({
+        //   appUrl: popupOpenedSiteTab.url,
+        // }),
       }
     )
-      .then((response) => response.json())
+      .then(async (response) => {
+        if (!response.ok) {
+          // throw new Error(
+          //   `HTTP error! Status: ${response.status} ${response.statusText}`
+          // );
+          await chrome.runtime.sendMessage({
+            action: "unsupportedSite",
+          });
+          return;
+        }
+        return response.json();
+      })
       .then(async (data) => {
         if (!data?.user) {
-          //If api returns a cookie error delete user and start login.
+          // If API returns a cookie error, delete user and start login.
           await chrome.runtime.sendMessage({
             action: "dropUserCreds",
           });
@@ -476,9 +533,12 @@ const fetchUserNew = async () => {
 
         updateIconBasedOnCookie();
         startTimerAlarm(2);
+      })
+      .catch((err) => {
+        console.error("fetchUserNew", err);
       });
   } catch (err) {
-    console.log(err);
+    console.error("Outer catch block", err);
   }
 };
 
@@ -518,9 +578,6 @@ function stopTimer() {
 
 function isCookieValueExpired(cookieValue) {
   const expDate = cookieValue.expirationDate;
-  console.log(expDate);
-
   const epochTime = Math.floor(Date.now() / 1000) * 1000;
-  console.log(epochTime);
   return Date(expDate) < Date();
 }

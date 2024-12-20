@@ -113,6 +113,10 @@ function App() {
           setStep("error");
           break;
 
+        case "unsupportedSite":
+          setCodeType(null);
+          setStep("unsupportedSite");
+          break;
         default:
           break;
       }
@@ -125,8 +129,9 @@ function App() {
     };
   }, []);
 
-  const codeUrl = `https://app.${import.meta.env.VITE_SUBDOMAIN
-    }.scrambleid.com/qr?id=${codeData?.code}:${codeData?.qid}`;
+  const codeUrl = `https://app.${
+    import.meta.env.VITE_SUBDOMAIN
+  }.scrambleid.com/qr?id=${codeData?.code}:${codeData?.qid}`;
 
   const renderCode = codeData ? (
     <>
@@ -178,10 +183,32 @@ function App() {
         userId={creds.username}
         password={creds.password}
       />
+      <NotSupportedUrl isShow={step === "unsupportedSite"} />
       <InvalidSession isShow={step === "error"} onClickReload={onClickReload} />
-      <Footer codeType={codeType} setCodeType={setCodeType} />
+      <Footer
+        codeType={codeType}
+        setCodeType={setCodeType}
+        closeText={step === "unsupportedSite" ? "Close" : "Logout"}
+      />
     </div>
   );
 }
 
 export default App;
+
+const NotSupportedUrl = ({ isShow }) => {
+  return (
+    <div
+      className={cn(
+        "hidden h-[410px] w-[95%] authBackground rounded-md mx-auto flex-col items-center justify-center px-5 pt-[32px]",
+        {
+          flex: isShow,
+        }
+      )}
+    >
+      <p className="font-semibold text-lg dark:text-white">
+        This url is not supported!
+      </p>
+    </div>
+  );
+};
