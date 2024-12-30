@@ -1,3 +1,5 @@
+import { fetchUserCredentials, getQidOrDid } from "./backgroundUtils/api";
+
 console.log("hello from sw!!");
 
 const SCR_ONLINE = "assets/images/online48.png";
@@ -18,6 +20,9 @@ const autoPopupCheckUrls = [
   "https://demoguest.com/uat/ukg/radius",
   "https://demoguest.com/prod/ukg/ldap",
   "https://demoguest.com/prod/ukg/radius",
+
+  "https://demoguest.com/vdi/radius",
+  "https://demoguest.com/vdi/ldap",
 ];
 
 const checkUrlToOpenPopup = (tab) => {
@@ -33,7 +38,8 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     const { isAutoPopup } =
       (await chrome.storage.local.get("isAutoPopup")) || false;
 
-    popupOpenedSiteTab = tab;
+    // popupOpenedSiteTab = tab;
+    // console.log("here", tab)
 
     if (tab.url && checkUrlToOpenPopup(tab) && isAutoPopup) {
       // Close the existing popup if it exists
@@ -78,9 +84,9 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 
 chrome.tabs.onActivated.addListener((activeInfo) => {
   chrome.tabs.get(activeInfo.tabId, (tab) => {
-    if (tab && tab.url) {
-      popupOpenedSiteTab = tab;
-      // console.log(tab);
+    if (tab && tab?.url) {
+      // popupOpenedSiteTab = tab;
+      chrome.storage.local.set({ lastActiveTab: tab });
     }
   });
 });
@@ -104,33 +110,6 @@ updateIconBasedOnCookie();
 
 let socket = null;
 
-async function getQidOrDid() {
-  const res = await fetch(
-    `https://wsp2.${
-      import.meta.env.VITE_SUBDOMAIN
-    }.scrambleid.com/login/portal/ZGVtfHxkZW0tcG9ydGFs?format=json`,
-    {
-      headers: {
-        accept: "*/*",
-        "accept-language": "en-US,en;q=0.9",
-        origin: "http://localhost:3100",
-        priority: "u=1, i",
-        referer: "http://localhost:3100/",
-        "sec-ch-ua":
-          '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
-        "sec-ch-ua-mobile": "?0",
-        "sec-ch-ua-platform": '"Windows"',
-        "sec-fetch-dest": "empty",
-        "sec-fetch-mode": "cors",
-        "sec-fetch-site": "cross-site",
-        "user-agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-      },
-    }
-  );
-  const data = await res.json();
-  return data;
-}
 async function configureLogin() {
   const authCodeData = await getQidOrDid();
 
@@ -156,6 +135,7 @@ async function configureLogin() {
     authCodeData,
   });
 }
+
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
   if (request.action === "saveUserSettingForAutoPopup") {
     chrome.storage.local.set({ isAutoPopup: request.enableAuto });
@@ -327,7 +307,12 @@ async function establishWsConnection(url) {
     }
 
     if (wsIncomingMessage.op === "PORTAL") {
-      fetchUserCredentials();
+      fetchUserCredentials(
+        eventData,
+        // popupOpenedSiteTab,
+        updateIconBasedOnCookie,
+        startTimerAlarm
+      );
     }
 
     if (wsIncomingMessage.op === "QID") {
@@ -404,85 +389,86 @@ async function establishWsConnection(url) {
   });
 }
 
-const fetchUserCredentials = async () => {
-  const wsIncomingMessage = JSON.parse(eventData.data);
+// const fetchUserCredentials = async () => {
+//   const wsIncomingMessage = JSON.parse(eventData.data);
 
-  try {
-    await chrome.runtime.sendMessage({
-      action: "callingCredentialsApi",
-    });
+//   try {
+//     await chrome.runtime.sendMessage({
+//       action: "callingCredentialsApi",
+//     });
 
-    const cookie = JSON.parse(wsIncomingMessage.value).cookie;
-    const cookieExpireAt = JSON.parse(wsIncomingMessage.value).expiresAt;
+//     const cookie = JSON.parse(wsIncomingMessage.value).cookie;
+//     const cookieExpireAt = JSON.parse(wsIncomingMessage.value).expiresAt;
 
-    chrome.cookies.set(
-      {
-        url: import.meta.env.VITE_CRED_BASE_URL,
-        name: import.meta.env.VITE_COOKIE_NAME,
-        value: cookie,
-        expirationDate: cookieExpireAt,
-      },
-      async (cookie) => {
-        if (cookie) {
-          console.log("Cookie set successfully:");
-          await fetch(
-            `${
-              import.meta.env.VITE_CRED_BASE_URL
-            }/api/v1/lid/start-session/ZGVtfHxsZGFwYXBwMQ`,
-            {
-              method: "post",
-              credentials: "include",
-              // body: JSON.stringify({
-              //   appUrl: popupOpenedSiteTab.url,
-              // }),
-            }
-          )
-            .then(async (response) => {
-              if (!response.ok) {
-                // throw new Error(
-                //   `HTTP error! Status: ${response.status} ${response.statusText}`
-                // );
-                await chrome.runtime.sendMessage({
-                  action: "unsupportedSite",
-                });
-                return;
-                //instead of throwing error show api failed ui,remove the cookie as well
-              }
-              return response.json();
-            })
-            .then(async (data) => {
-              // if (!data?.user) {
-              //   await chrome.runtime.sendMessage({
-              //     action: "error",
-              //   });
-              //   return;
-              // }
+//     chrome.cookies.set(
+//       {
+//         url: import.meta.env.VITE_CRED_BASE_URL,
+//         name: import.meta.env.VITE_COOKIE_NAME,
+//         value: cookie,
+//         expirationDate: cookieExpireAt,
+//       },
+//       async (cookie) => {
+//         ///api/v1/lid/start-session/ZGVtfHxsZGFwYXBwMQ
+//         if (cookie) {
+//           console.log("Cookie set successfully:");
+//           await fetch(
+//             `${
+//               import.meta.env.VITE_CRED_BASE_URL
+//             }/api/v1/lid/start-session`,
+//             {
+//               method: "post",
+//               credentials: "include",
+//               body: JSON.stringify({
+//                 appUrl: popupOpenedSiteTab?.url || null,
+//               }),
+//             }
+//           )
+//             .then(async (response) => {
+//               if (!response.ok) {
+//                 // throw new Error(
+//                 //   `HTTP error! Status: ${response.status} ${response.statusText}`
+//                 // );
+//                 await chrome.runtime.sendMessage({
+//                   action: "unsupportedSite",
+//                 });
+//                 return;
+//                 //instead of throwing error show api failed ui,remove the cookie as well
+//               }
+//               return response.json();
+//             })
+//             .then(async (data) => {
+//               // if (!data?.user) {
+//               //   await chrome.runtime.sendMessage({
+//               //     action: "error",
+//               //   });
+//               //   return;
+//               // }
 
-              await chrome.runtime.sendMessage({
-                action: "hideLoaderShowCredentials",
-                user: data.user || "test",
-              });
+//               await chrome.runtime.sendMessage({
+//                 action: "hideLoaderShowCredentials",
+//                 user: data.user || "test",
+//               });
 
-              await chrome.storage.local.set({
-                User: data?.user || null,
-              });
+//               await chrome.storage.local.set({
+//                 User: data?.user || null,
+//               });
 
-              updateIconBasedOnCookie();
-              startTimerAlarm(2);
-            })
-            .catch((err) => {
-              console.log("fetchUserCredentials", err);
-              //go to some error page
-            });
-        } else {
-          console.error("Error setting cookie");
-        }
-      }
-    );
-  } catch (err) {
-    console.log(err);
-  }
-};
+//               updateIconBasedOnCookie();
+//               startTimerAlarm(2);
+//             })
+//             .catch((err) => {
+//               console.log("fetchUserCredentials", err);
+//               //go to some error page
+//             });
+//         } else {
+//           console.error("Error setting cookie");
+//         }
+//       }
+//     );
+//   } catch (err) {
+//     console.log(err);
+//   }
+// };
 
 const fetchUserNew = async () => {
   try {
@@ -491,15 +477,13 @@ const fetchUserNew = async () => {
     });
 
     await fetch(
-      `${
-        import.meta.env.VITE_CRED_BASE_URL
-      }/api/v1/lid/start-session/ZGVtfHxsZGFwYXBwMQ`,
+      `${import.meta.env.VITE_CRED_BASE_URL}/api/v1/lid/start-session`,
       {
         method: "post",
         credentials: "include",
-        // body: JSON.stringify({
-        //   appUrl: popupOpenedSiteTab.url,
-        // }),
+        body: JSON.stringify({
+          appUrl: popupOpenedSiteTab.url || null,
+        }),
       }
     )
       .then(async (response) => {
