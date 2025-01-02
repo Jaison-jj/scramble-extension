@@ -7,6 +7,16 @@ const SCR_OFFLINE = "assets/images/offline48.png";
 
 let socket = null;
 let wsEventData = null;
+let lastActiveTab = null;
+
+chrome.tabs.onActivated.addListener((activeInfo) => {
+  chrome.tabs.get(activeInfo.tabId, (tab) => {
+    if (tab && tab.url) {
+      lastActiveTab = tab;
+      chrome.storage.local.set({ lastActiveTab });
+    }
+  });
+});
 
 function updateIconBasedOnCookie() {
   chrome.cookies.get(
@@ -27,7 +37,13 @@ async function getAuthDataSetWsCon() {
   chrome.storage.local.set({ authCodeData });
 
   const epochTime = Math.floor(Date.now() / 1000) * 1000;
-  const wsUrl = `wss://wsp.${import.meta.env.VITE_SUBDOMAIN}.scrambleid.com/v1?action=PORTAL&qid=${authCodeData?.qid}&did=${authCodeData.did}&org=${authCodeData?.code}&epoch=${epochTime}&amznReqId=${authCodeData?.amznReqId}`;
+  const wsUrl = `wss://wsp.${
+    import.meta.env.VITE_SUBDOMAIN
+  }.scrambleid.com/v1?action=PORTAL&qid=${authCodeData?.qid}&did=${
+    authCodeData.did
+  }&org=${authCodeData?.code}&epoch=${epochTime}&amznReqId=${
+    authCodeData?.amznReqId
+  }`;
 
   await establishWsConnection(wsUrl);
 
@@ -81,7 +97,9 @@ async function handleOpenPopup() {
 }
 
 async function handleRestartQrTimer() {
-  const { authCodeData: scrambleState } = await chrome.storage.local.get("authCodeData");
+  const { authCodeData: scrambleState } = await chrome.storage.local.get(
+    "authCodeData"
+  );
   if (socket && socket.readyState === WebSocket.OPEN) {
     try {
       const message = {
@@ -101,7 +119,9 @@ async function handleRestartQrTimer() {
 }
 
 async function handleRestartTypeCodeTimer() {
-  const { authCodeData: scrambleState } = await chrome.storage.local.get("authCodeData");
+  const { authCodeData: scrambleState } = await chrome.storage.local.get(
+    "authCodeData"
+  );
   if (socket && socket.readyState === WebSocket.OPEN) {
     try {
       const message = {
@@ -121,7 +141,9 @@ async function handleRestartTypeCodeTimer() {
 }
 
 async function handleSwitchCodeType(codeType) {
-  const { authCodeData: scrambleState } = await chrome.storage.local.get("authCodeData");
+  const { authCodeData: scrambleState } = await chrome.storage.local.get(
+    "authCodeData"
+  );
   if (socket.readyState === WebSocket.OPEN) {
     try {
       const message = {
@@ -166,7 +188,9 @@ async function handleDropUserCreds() {
 
 async function establishWsConnection(url) {
   socket = new WebSocket(url);
-  const { authCodeData: scrambleState } = await chrome.storage.local.get("authCodeData");
+  const { authCodeData: scrambleState } = await chrome.storage.local.get(
+    "authCodeData"
+  );
 
   socket.addEventListener("open", () => {
     console.log("ws connection established.");
@@ -191,7 +215,11 @@ async function establishWsConnection(url) {
         });
         break;
       case "PORTAL":
-        fetchUserCredentials(wsEventData, updateIconBasedOnCookie, startTimerAlarm);
+        fetchUserCredentials(
+          wsEventData,
+          updateIconBasedOnCookie,
+          startTimerAlarm
+        );
         break;
       case "QID":
         await updateAuthCodeData({ qid: wsIncomingMessage.value });
@@ -210,11 +238,16 @@ async function establishWsConnection(url) {
         });
         break;
       case "validationCode":
-        await updateAuthCodeData({ did: JSON.stringify(wsIncomingMessage.value) });
+        await updateAuthCodeData({
+          did: JSON.stringify(wsIncomingMessage.value),
+        });
         await chrome.runtime.sendMessage({
           action: "validationCodeReceived",
           newDid: wsIncomingMessage.value,
-          newCodeData: { ...scrambleState, did: JSON.stringify(wsIncomingMessage.value) },
+          newCodeData: {
+            ...scrambleState,
+            did: JSON.stringify(wsIncomingMessage.value),
+          },
         });
         break;
       case "NO_CONSENT":
@@ -233,12 +266,16 @@ async function establishWsConnection(url) {
   });
 
   socket.addEventListener("close", (event) => {
-    console.warn(`WebSocket connection closed: Code=${event.code}, Reason=${event}`);
+    console.warn(
+      `WebSocket connection closed: Code=${event.code}, Reason=${event}`
+    );
   });
 }
 
 async function updateAuthCodeData(newData) {
-  const { authCodeData: scrambleState } = await chrome.storage.local.get("authCodeData");
+  const { authCodeData: scrambleState } = await chrome.storage.local.get(
+    "authCodeData"
+  );
   await chrome.storage.local.set({
     authCodeData: { ...scrambleState, ...newData },
   });

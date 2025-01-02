@@ -32,13 +32,8 @@ export const fetchUserCredentials = async (
   startTimerAlarm
 ) => {
   const wsIncomingMessage = JSON.parse(wsEventData.data);
-  let popupOpenedSiteTab = null;
 
-  chrome.storage.local.get("lastActiveTab", (result) => {
-    if (result.lastActiveTab) {
-      popupOpenedSiteTab = result.lastActiveTab;
-    }
-  });
+  const { lastActiveTab } = await chrome.storage.local.get("lastActiveTab");
 
   try {
     await chrome.runtime.sendMessage({
@@ -65,7 +60,7 @@ export const fetchUserCredentials = async (
               method: "post",
               credentials: "include",
               body: JSON.stringify({
-                appUrl: popupOpenedSiteTab?.url || null,
+                appUrl: lastActiveTab?.url || null,
               }),
             }
           )
@@ -124,7 +119,7 @@ export async function getUserCredentials() {
         method: "post",
         credentials: "include",
         body: JSON.stringify({
-          appUrl: popupOpenedSiteTab.url || null,
+          appUrl: lastActiveTab.url || null,
         }),
       }
     )
