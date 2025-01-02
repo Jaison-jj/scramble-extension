@@ -28,18 +28,17 @@ export async function getQidOrDid() {
 
 export const fetchUserCredentials = async (
   wsEventData,
-  // popupOpenedSiteTab,
   updateIconBasedOnCookie,
   startTimerAlarm
 ) => {
   const wsIncomingMessage = JSON.parse(wsEventData.data);
-  let popupOpenedSiteTab = null
+  let popupOpenedSiteTab = null;
 
-  chrome.storage.local.get('lastActiveTab', (result) => {
+  chrome.storage.local.get("lastActiveTab", (result) => {
     if (result.lastActiveTab) {
       popupOpenedSiteTab = result.lastActiveTab;
     }
-  })
+  });
 
   try {
     await chrome.runtime.sendMessage({
@@ -93,7 +92,7 @@ export const fetchUserCredentials = async (
 
               await chrome.runtime.sendMessage({
                 action: "hideLoaderShowCredentials",
-                user: data.user || "test",
+                user: data.user || { userName: "hello", password: "123" },
               });
 
               await chrome.storage.local.set({
@@ -116,3 +115,37 @@ export const fetchUserCredentials = async (
     console.log(err);
   }
 };
+
+export async function getUserCredentials() {
+  try {
+    await fetch(
+      `${import.meta.env.VITE_CRED_BASE_URL}/api/v1/lid/start-session`,
+      {
+        method: "post",
+        credentials: "include",
+        body: JSON.stringify({
+          appUrl: popupOpenedSiteTab.url || null,
+        }),
+      }
+    )
+      .then(async (response) => {
+        if (!response.ok) {
+          await chrome.runtime.sendMessage({
+            action: "unsupportedSite",
+          });
+          throw new Error(
+            `getUserCreds ERROR! Status: ${response.status} ${response.statusText}`
+          );
+        }
+        return response.json();
+      })
+      .then(async (data) => {
+        if (!data?.user) {
+          // show error ui
+        }
+        //do something with the user
+      });
+  } catch (error) {
+    //do something with error
+  }
+}
