@@ -1,4 +1,8 @@
-import { fetchUserCredentials, getQidOrDid } from "./backgroundUtils/api";
+import {
+  initialFetchUser,
+  getQidOrDid,
+  fetchCredentials,
+} from "./backgroundUtils/api";
 
 console.log("hello from sw!!");
 
@@ -86,9 +90,14 @@ async function handleOpenPopup() {
     },
     async (cookie) => {
       if (cookie && isCookieValueExpired(cookie)) {
+        handleDropUserCreds();
         await chrome.storage.local.set({ User: null });
       } else if (cookie && !isCookieValueExpired(cookie)) {
-        // get user from local storage and show
+        const creds = await fetchCredentials(lastActiveTab?.url);
+        await chrome.runtime.sendMessage({
+          action: "hideLoaderShowCredentials",
+          user: creds.user || { userName: null, password: null },
+        });
       } else {
         getAuthDataSetWsCon();
       }
@@ -215,11 +224,7 @@ async function establishWsConnection(url) {
         });
         break;
       case "PORTAL":
-        fetchUserCredentials(
-          wsEventData,
-          updateIconBasedOnCookie,
-          startTimerAlarm
-        );
+        initialFetchUser(wsEventData, updateIconBasedOnCookie, startTimerAlarm);
         break;
       case "QID":
         await updateAuthCodeData({ qid: wsIncomingMessage.value });
@@ -284,7 +289,7 @@ async function updateAuthCodeData(newData) {
 chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === "timerAlarm") {
     console.log("Timer finished!");
-    // refetch user
+    // check if cookie is expired, if yes, refetch the user credentials
   }
 });
 

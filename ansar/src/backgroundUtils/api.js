@@ -26,13 +26,36 @@ export async function getQidOrDid() {
   return data;
 }
 
-export const fetchUserCredentials = async (
+export const fetchCredentials = async (appUrl) => {
+  const response = await fetch(
+    `${import.meta.env.VITE_CRED_BASE_URL}/api/v1/lid/start-session`,
+    {
+      method: "post",
+      credentials: "include",
+      body: JSON.stringify({
+        appUrl: appUrl || null,
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    await chrome.runtime.sendMessage({
+      action: "unsupportedSite",
+    });
+    throw new Error(
+      `HTTP error! Status: ${response.status} ${response.statusText}`
+    );
+  }
+
+  return response.json();
+};
+
+export const initialFetchUser = async (
   wsEventData,
   updateIconBasedOnCookie,
   startTimerAlarm
 ) => {
   const wsIncomingMessage = JSON.parse(wsEventData.data);
-
   const { lastActiveTab } = await chrome.storage.local.get("lastActiveTab");
 
   try {
@@ -51,56 +74,24 @@ export const fetchUserCredentials = async (
         expirationDate: cookieExpireAt,
       },
       async (cookie) => {
-        ///api/v1/lid/start-session/ZGVtfHxsZGFwYXBwMQ
         if (cookie) {
           console.log("Cookie set successfully:");
-          await fetch(
-            `${import.meta.env.VITE_CRED_BASE_URL}/api/v1/lid/start-session`,
-            {
-              method: "post",
-              credentials: "include",
-              body: JSON.stringify({
-                appUrl: lastActiveTab?.url || null,
-              }),
-            }
-          )
-            .then(async (response) => {
-              if (!response.ok) {
-                // throw new Error(
-                //   `HTTP error! Status: ${response.status} ${response.statusText}`
-                // );
-                await chrome.runtime.sendMessage({
-                  action: "unsupportedSite",
-                });
-                return;
-                //instead of throwing error show api failed ui,remove the cookie as well
-              }
-              return response.json();
-            })
-            .then(async (data) => {
-              // if (!data?.user) {
-              //   await chrome.runtime.sendMessage({
-              //     action: "error",
-              //   });
-              //   return;
-              // }
-
-              await chrome.runtime.sendMessage({
-                action: "hideLoaderShowCredentials",
-                user: data.user || { userName: "hello", password: "123" },
-              });
-
-              await chrome.storage.local.set({
-                User: data?.user || null,
-              });
-
-              updateIconBasedOnCookie();
-              startTimerAlarm(2);
-            })
-            .catch((err) => {
-              console.log("fetchUserCredentials", err);
-              //go to some error page
+          try {
+            const data = await fetchCredentials(lastActiveTab?.url);
+            await chrome.runtime.sendMessage({
+              action: "hideLoaderShowCredentials",
+              user: data.user || { userName: "hello", password: "123" },
             });
+
+            await chrome.storage.local.set({
+              User: data?.user || { userName: null, password: null },
+            });
+
+            updateIconBasedOnCookie();
+            startTimerAlarm(2);
+          } catch (err) {
+            console.log("fetchUserCredentials", err);
+          }
         } else {
           console.error("Error setting cookie");
         }
@@ -110,37 +101,3 @@ export const fetchUserCredentials = async (
     console.log(err);
   }
 };
-
-export async function getUserCredentials() {
-  try {
-    await fetch(
-      `${import.meta.env.VITE_CRED_BASE_URL}/api/v1/lid/start-session`,
-      {
-        method: "post",
-        credentials: "include",
-        body: JSON.stringify({
-          appUrl: lastActiveTab.url || null,
-        }),
-      }
-    )
-      .then(async (response) => {
-        if (!response.ok) {
-          await chrome.runtime.sendMessage({
-            action: "unsupportedSite",
-          });
-          throw new Error(
-            `getUserCreds ERROR! Status: ${response.status} ${response.statusText}`
-          );
-        }
-        return response.json();
-      })
-      .then(async (data) => {
-        if (!data?.user) {
-          // show error ui
-        }
-        //do something with the user
-      });
-  } catch (error) {
-    //do something with error
-  }
-}
