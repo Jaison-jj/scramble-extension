@@ -137,8 +137,8 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     try {
       const message = {
         op: request.codeType,
-        value: scrambleState.qid,
-        org: scrambleState.code,
+        value: scrambleState.qid || "null",
+        org: scrambleState.code || "null",
         source: "PORTAL",
         action: "PORTAL",
         amznReqId: scrambleState.amznReqId,
@@ -181,7 +181,10 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
 async function establishWsConnection(url) {
   socket = new WebSocket(url);
 
-  const authCodeData = await chrome.storage.local.get("Auth");
+  const { authCodeData: scrambleState } = await chrome.storage.local.get(
+    "authCodeData"
+  );
+  // debugger
 
   socket.addEventListener("open", () => {
     console.log("ws connection established.");
@@ -217,13 +220,13 @@ async function establishWsConnection(url) {
 
     if (wsIncomingMessage.op === "QID") {
       await chrome.storage.local.set({
-        authCodeData: { ...authCodeData, qid: wsIncomingMessage.value },
+        authCodeData: { ...scrambleState, qid: wsIncomingMessage.value },
       });
 
       await chrome.runtime.sendMessage({
         action: "restartQrTimer",
         newQid: wsIncomingMessage.value,
-        newCodeData: { ...authCodeData, qid: wsIncomingMessage.value },
+        newCodeData: { ...scrambleState, qid: wsIncomingMessage.value },
       });
     }
 
@@ -231,20 +234,20 @@ async function establishWsConnection(url) {
     if (wsIncomingMessage.op === "DID") {
       //user has chosen typeCode
       await chrome.storage.local.set({
-        authCodeData: { ...authCodeData, did: wsIncomingMessage.value },
+        authCodeData: { ...scrambleState, did: wsIncomingMessage.value },
       });
 
       await chrome.runtime.sendMessage({
         action: "restartTypeCodeTimer",
         newDid: wsIncomingMessage.value,
-        newCodeData: { ...authCodeData, did: wsIncomingMessage.value },
+        newCodeData: { ...scrambleState, did: wsIncomingMessage.value },
       });
     }
 
     if (wsIncomingMessage.op === "validationCode") {
       await chrome.storage.local.set({
         authCodeData: {
-          ...authCodeData,
+          ...scrambleState,
           did: JSON.stringify(wsIncomingMessage.value),
         },
       });
@@ -253,7 +256,7 @@ async function establishWsConnection(url) {
         action: "validationCodeReceived",
         newDid: wsIncomingMessage.value,
         newCodeData: {
-          ...authCodeData,
+          ...scrambleState,
           did: JSON.stringify(wsIncomingMessage.value),
         },
       });
