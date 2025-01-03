@@ -3,6 +3,7 @@ import {
   getQidOrDid,
   fetchCredentials,
 } from "./backgroundUtils/api";
+import { checkUrlToOpenPopup } from "./backgroundUtils/helpers";
 
 console.log("hello from sw!!");
 
@@ -18,6 +19,7 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
     if (tab && tab.url) {
       lastActiveTab = tab;
       chrome.storage.local.set({ lastActiveTab });
+      console.log(tab.url);
     }
   });
 });
@@ -83,6 +85,13 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
 });
 
 async function handleOpenPopup() {
+  if (checkUrlToOpenPopup(lastActiveTab.url)) {
+    chrome.runtime.sendMessage({
+      action: "unsupportedSite",
+    });
+    return;
+  }
+
   chrome.cookies.get(
     {
       url: import.meta.env.VITE_CRED_BASE_URL,
@@ -224,7 +233,7 @@ async function establishWsConnection(url) {
         });
         break;
       case "PORTAL":
-        initialFetchUser(wsEventData, updateIconBasedOnCookie, startTimerAlarm);
+        initialFetchUser(wsEventData, updateIconBasedOnCookie);
         break;
       case "QID":
         await updateAuthCodeData({ qid: wsIncomingMessage.value });
@@ -289,22 +298,13 @@ async function updateAuthCodeData(newData) {
 chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === "timerAlarm") {
     console.log("Timer finished!");
-    // check if cookie is expired, if yes, refetch the user credentials
+    const creds = await fetchCredentials(lastActiveTab?.url);
+    await chrome.runtime.sendMessage({
+      action: "hideLoaderShowCredentials",
+      user: creds.user || { userName: null, password: null },
+    });
   }
 });
-
-async function startTimerAlarm(duration) {
-  console.log("Timer started");
-  const now = Date.now();
-  const twoMinutesFromNow = now + 2 * 60 * 1000;
-
-  await chrome.storage.local.set({
-    startTime: now,
-    endTime: twoMinutesFromNow,
-  });
-
-  chrome.alarms.create("timerAlarm", { delayInMinutes: duration });
-}
 
 function isCookieValueExpired(cookieValue) {
   const expDate = cookieValue.expirationDate;

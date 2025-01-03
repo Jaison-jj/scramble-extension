@@ -53,7 +53,6 @@ export const fetchCredentials = async (appUrl) => {
 export const initialFetchUser = async (
   wsEventData,
   updateIconBasedOnCookie,
-  startTimerAlarm
 ) => {
   const wsIncomingMessage = JSON.parse(wsEventData.data);
   const { lastActiveTab } = await chrome.storage.local.get("lastActiveTab");
@@ -101,3 +100,16 @@ export const initialFetchUser = async (
     console.log(err);
   }
 };
+
+export async function startTimerAlarm(duration) {
+  console.log("Timer started");
+  const now = Date.now();
+  const twoMinutesFromNow = now + 2 * 60 * 1000;
+
+  await chrome.storage.local.set({
+    startTime: now,
+    endTime: twoMinutesFromNow,
+  });
+
+  chrome.alarms.create("timerAlarm", { delayInMinutes: duration });
+}
