@@ -10,9 +10,21 @@ console.log("hello from sw!!");
 const SCR_ONLINE = "assets/images/online48.png";
 const SCR_OFFLINE = "assets/images/offline48.png";
 
+const epochTime = Math.floor(Date.now() / 1000) * 1000;
+
 let socket = null;
 let wsEventData = null;
 let lastActiveTab = null;
+let appEnv = "dev";
+
+// chrome.storage.onChanged.addListener((changes, namespace) => {
+//   for (let [key, { oldValue, newValue }] of Object.entries(changes)) {
+//     console.log(
+//       `Storage key "${key}" in namespace "${namespace}" changed.`,
+//       `Old value was "${oldValue}", new value is "${newValue}".`
+//     );
+//   }
+// });
 
 chrome.tabs.onActivated.addListener((activeInfo) => {
   chrome.tabs.get(activeInfo.tabId, (tab) => {
@@ -27,7 +39,7 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
 function updateIconBasedOnCookie() {
   chrome.cookies.get(
     {
-      url: import.meta.env.VITE_CRED_BASE_URL,
+      url: `https://${appEnv}.scrambleid.com`,
       name: import.meta.env.VITE_COOKIE_NAME,
     },
     (cookie) => {
@@ -43,13 +55,7 @@ async function getAuthDataSetWsCon() {
   chrome.storage.local.set({ authCodeData });
 
   const epochTime = Math.floor(Date.now() / 1000) * 1000;
-  const wsUrl = `wss://wsp.${
-    import.meta.env.VITE_SUBDOMAIN
-  }.scrambleid.com/v1?action=PORTAL&qid=${authCodeData?.qid}&did=${
-    authCodeData.did
-  }&org=${authCodeData?.code}&epoch=${epochTime}&amznReqId=${
-    authCodeData?.amznReqId
-  }`;
+  const wsUrl = `wss://wsp.${appEnv}.scrambleid.com/v1?action=PORTAL&qid=${authCodeData?.qid}&did=${authCodeData.did}&org=${authCodeData?.code}&epoch=${epochTime}&amznReqId=${authCodeData?.amznReqId}`;
 
   await establishWsConnection(wsUrl);
 
@@ -61,11 +67,19 @@ async function getAuthDataSetWsCon() {
 
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
   switch (request.action) {
-    case "saveUserSettingForAutoPopup":
-      chrome.storage.local.set({ isAutoPopup: request.enableAuto });
+    case "saveUserSettings":
+      appEnv = request.selectedEnv;
+      await chrome.storage.local.set({
+        isAutoPopup: request.enableAuto,
+        selectedEnv: request.selectedEnv,
+      });
       break;
     case "open_popup":
-      handleOpenPopup();
+      await handleOpenPopup();
+      await chrome.runtime.sendMessage({
+        action: "appEnvToPopup",
+        selectedEnv: appEnv,
+      });
       break;
     case "restart_qr_timer":
       handleRestartQrTimer();
@@ -85,16 +99,16 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
 });
 
 async function handleOpenPopup() {
-  if (checkUrlToOpenPopup(lastActiveTab.url)) {
-    chrome.runtime.sendMessage({
-      action: "unsupportedSite",
-    });
-    return;
-  }
+  // if (checkUrlToOpenPopup(lastActiveTab.url)) {
+  //   chrome.runtime.sendMessage({
+  //     action: "unsupportedSite",
+  //   });
+  //   return;
+  // }
 
   chrome.cookies.get(
     {
-      url: import.meta.env.VITE_CRED_BASE_URL,
+      url: `https://${appEnv}.scrambleid.com`,
       name: import.meta.env.VITE_COOKIE_NAME,
     },
     async (cookie) => {
@@ -190,7 +204,7 @@ async function handleDropUserCreds() {
   });
   chrome.cookies.remove(
     {
-      url: import.meta.env.VITE_CRED_BASE_URL,
+      url: `https://${appEnv}.scrambleid.com`,
       name: import.meta.env.VITE_COOKIE_NAME,
     },
     () => {
@@ -221,10 +235,19 @@ async function establishWsConnection(url) {
 
     switch (wsIncomingMessage.op) {
       case "TYPECODE_LOGIN_NOT_DONE":
+        const authCodeData = await getQidOrDid();
+
         await chrome.runtime.sendMessage({
           action: "firstTimeLoginShowTypeCode",
           wsEvent: wsIncomingMessage,
         });
+
+        const uqId = JSON.parse(wsIncomingMessage.value).uqId;
+
+        const tempWsUrl = `wss://wsp.${appEnv}.scrambleid.com/v1?action=PORTAL&qid=${authCodeData?.qid}&did=${uqId}&org=${authCodeData?.code}&epoch=${epochTime}`;
+
+        await establishWsConnection(tempWsUrl);
+
         break;
       case "WaitForConfirm":
         await chrome.runtime.sendMessage({

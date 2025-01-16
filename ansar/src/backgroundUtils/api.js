@@ -1,8 +1,18 @@
+let appEnv = "dev";
+
+chrome.storage.onChanged.addListener((changes, namespace) => {
+  const { selectedEnv } = changes ?? {}; 
+  const newEnv = selectedEnv?.newValue;
+  
+  if (newEnv !== undefined) {
+    appEnv = newEnv; 
+  }
+});
+
+
 export async function getQidOrDid() {
   const res = await fetch(
-    `https://wsp2.${
-      import.meta.env.VITE_SUBDOMAIN
-    }.scrambleid.com/login/portal/ZGVtfHxkZW0tcG9ydGFs?format=json`,
+    `https://wsp2.${appEnv}.scrambleid.com/login/portal/ZGVtfHxkZW0tcG9ydGFs?format=json`,
     {
       headers: {
         accept: "*/*",
@@ -28,7 +38,7 @@ export async function getQidOrDid() {
 
 export const fetchCredentials = async (appUrl) => {
   const response = await fetch(
-    `${import.meta.env.VITE_CRED_BASE_URL}/api/v1/lid/start-session`,
+    `https://${appEnv}.scrambleid.com/api/v1/lid/start-session`,
     {
       method: "post",
       credentials: "include",
@@ -52,7 +62,7 @@ export const fetchCredentials = async (appUrl) => {
 
 export const initialFetchUser = async (
   wsEventData,
-  updateIconBasedOnCookie,
+  updateIconBasedOnCookie
 ) => {
   const wsIncomingMessage = JSON.parse(wsEventData.data);
   const { lastActiveTab } = await chrome.storage.local.get("lastActiveTab");
@@ -67,7 +77,7 @@ export const initialFetchUser = async (
 
     chrome.cookies.set(
       {
-        url: import.meta.env.VITE_CRED_BASE_URL,
+        url: `https://${appEnv}.scrambleid.com`,
         name: import.meta.env.VITE_COOKIE_NAME,
         value: cookie,
         expirationDate: cookieExpireAt,

@@ -44,6 +44,7 @@ function App() {
     icon: null,
     showMask: false,
   });
+  const [appEnv, setAppEnv] = useState(null);
 
   const onClickReload = () => {
     chrome?.runtime?.sendMessage({ action: "open_popup" });
@@ -128,6 +129,9 @@ function App() {
         setCodeType(null);
         setStep("unsupportedSite");
         break;
+      case "appEnvToPopup":
+        setAppEnv(request.selectedEnv);
+        break;
       default:
         break;
     }
@@ -142,9 +146,7 @@ function App() {
     };
   }, []);
 
-  const codeUrl = `https://app.${
-    import.meta.env.VITE_SUBDOMAIN
-  }.scrambleid.com/qr?id=${codeData?.code}:${codeData?.qid}`;
+  const codeUrl = `https://app.${appEnv}.scrambleid.com/qr?id=${codeData?.code}:${codeData?.qid}`;
 
   const renderCode = () => {
     if (!codeData) {

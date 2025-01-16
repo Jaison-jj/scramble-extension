@@ -7,12 +7,23 @@
   <body>
     <div id="parent-container">
       <div class="checkbox-container">
+        <label for="autoPopupCheckbox">Enable automatic popup? </label>
         <input
           type="checkbox"
           id="autoPopupCheckbox"
           name="autoPopupCheckbox"
         />
-        <label for="autoPopupCheckbox">Enable automatic popup? </label>
+      </div>
+
+      <div class="envSelect">
+        <label for="pet-select">Choose Environment:</label>
+        <select name="envs" id="env-select">
+          <option value="dev">Dev</option>
+          <option value="demo">Demo</option>
+          <option value="uat">Prod</option>
+          <option value="qa">QA</option>
+          <option value="uat">UAT</option>
+        </select>
       </div>
       <button id="saveButton">Save</button>
     </div>
