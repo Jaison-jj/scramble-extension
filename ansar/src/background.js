@@ -1,11 +1,11 @@
+console.log("hello from sw!!");
+
 import {
   initialFetchUser,
   getQidOrDid,
   fetchCredentials,
 } from "./backgroundUtils/api";
-import { checkUrlToOpenPopup } from "./backgroundUtils/helpers";
-
-console.log("hello from sw!!");
+import { isNotValidUrl } from "./backgroundUtils/helpers";
 
 const SCR_ONLINE = "assets/images/online48.png";
 const SCR_OFFLINE = "assets/images/offline48.png";
@@ -16,6 +16,8 @@ let socket = null;
 let wsEventData = null;
 let lastActiveTab = null;
 let appEnv = "dev";
+let popupWindowId = null;
+let autoPopupEnabled = false;
 
 // chrome.storage.onChanged.addListener((changes, namespace) => {
 //   for (let [key, { oldValue, newValue }] of Object.entries(changes)) {
@@ -34,6 +36,67 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
       console.log(tab.url);
     }
   });
+});
+
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+  if (changeInfo.status === "complete") {
+    // const { isAutoPopup } =
+    //   (await chrome.storage.local.get("isAutoPopup")) || false;
+
+    if (tab.url.startsWith("chrome")) return; // to prevent popup from opening on chrome:// urls
+
+    // debugger;
+    if (tab?.url && !isNotValidUrl(tab, appEnv) && autoPopupEnabled) {
+      if (popupWindowId) {
+        // chrome.windows.remove(popupWindowId, () => {
+        //   popupWindowId = null;
+        // })
+        chrome.windows.get(popupWindowId, (window) => {
+          if (window) {
+            // chrome.windows.remove(popupWindowId, () => {
+            //   popupWindowId = null;
+            // });
+          } else {
+            console.warn(
+              "Popup window with ID",
+              popupWindowId,
+              "may have already been closed."
+            );
+          }
+        });
+      }
+
+      chrome.windows.getCurrent({ populate: true }, (currentWindow) => {
+        const windowWidth = 356;
+        const windowHeight = 597;
+
+        const left =
+          currentWindow.left +
+          Math.floor((currentWindow.width - windowWidth) / 2);
+        const top =
+          currentWindow.top +
+          Math.floor((currentWindow.height - windowHeight) / 2);
+
+        chrome.windows.create(
+          {
+            url: "index.html",
+            type: "popup",
+            width: windowWidth,
+            height: windowHeight,
+            left: left,
+            top: top,
+          },
+          (window) => {
+            popupWindowId = window?.id || null;
+            // chrome.runtime.sendMessage({
+            //   action: "getExtensionWindowId",
+            //   id: window.id,
+            // });
+          }
+        );
+      });
+    }
+  }
 });
 
 function updateIconBasedOnCookie() {
@@ -67,12 +130,16 @@ async function getAuthDataSetWsCon() {
 
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
   switch (request.action) {
+    case "popupWindowClosed":
+      popupWindowId = null;
+      break;
     case "saveUserSettings":
       appEnv = request.selectedEnv;
       await chrome.storage.local.set({
         isAutoPopup: request.enableAuto,
         selectedEnv: request.selectedEnv,
       });
+      autoPopupEnabled = request.enableAuto;
       break;
     case "open_popup":
       await handleOpenPopup();
@@ -99,12 +166,14 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
 });
 
 async function handleOpenPopup() {
-  // if (checkUrlToOpenPopup(lastActiveTab.url)) {
-  //   chrome.runtime.sendMessage({
-  //     action: "unsupportedSite",
-  //   });
-  //   return;
-  // }
+  console.log("isNotValidUrl", isNotValidUrl(lastActiveTab, appEnv));
+
+  if (isNotValidUrl(lastActiveTab, appEnv)) {
+    chrome.runtime.sendMessage({
+      action: "unsupportedSite",
+    });
+    return;
+  }
 
   chrome.cookies.get(
     {
@@ -322,10 +391,12 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === "timerAlarm") {
     console.log("Timer finished!");
     const creds = await fetchCredentials(lastActiveTab?.url);
-    await chrome.runtime.sendMessage({
-      action: "hideLoaderShowCredentials",
-      user: creds.user || { userName: null, password: null },
-    });
+
+    // set the password to refreshPassword and send it to the popup.
+    // await chrome.runtime.sendMessage({
+    //   action: "hideLoaderShowCredentials",
+    //   user: creds.user || { userName: null, password: null },
+    // });
   }
 });
 

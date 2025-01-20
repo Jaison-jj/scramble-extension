@@ -1,6 +1,13 @@
 import { autoPopupCheckUrls } from "./constants";
 
-export const checkUrlToOpenPopup = (tab) => {
-    return autoPopupCheckUrls.some((url) => tab.url === url);
-  };
-  
+const devUrls = [
+  "https://demoguest.com/vdi/radius",
+  "https://demoguest.com/vdi/ldap",
+];
+
+export const isNotValidUrl = (tab, env) => {
+  const urlsToCheck = env === "dev" ? devUrls : autoPopupCheckUrls;
+
+  return !urlsToCheck.some((url) => tab?.url === url);
+};
+

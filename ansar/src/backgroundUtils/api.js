@@ -1,14 +1,13 @@
 let appEnv = "dev";
 
 chrome.storage.onChanged.addListener((changes, namespace) => {
-  const { selectedEnv } = changes ?? {}; 
+  const { selectedEnv } = changes ?? {};
   const newEnv = selectedEnv?.newValue;
-  
+
   if (newEnv !== undefined) {
-    appEnv = newEnv; 
+    appEnv = newEnv;
   }
 });
-
 
 export async function getQidOrDid() {
   const res = await fetch(

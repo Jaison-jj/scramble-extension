@@ -148,6 +148,10 @@ function App() {
 
   const codeUrl = `https://app.${appEnv}.scrambleid.com/qr?id=${codeData?.code}:${codeData?.qid}`;
 
+  window.onbeforeunload = function(event) {
+    chrome.runtime.sendMessage({ action: "popupWindowClosed" }); 
+  };
+  
   const renderCode = () => {
     if (!codeData) {
       return (
