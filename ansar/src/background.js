@@ -38,32 +38,37 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
   });
 });
 
+chrome.runtime.onInstalled.addListener(function(details){
+  chrome.storage.local.set({ selectedEnv:'dev' });
+});
+
+// ##################
+// ##################
+// ##################
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-  if (changeInfo.status === "complete") {
+
+  
+  if (changeInfo.status === "complete" && tab?.url) {
+
+    lastActiveTab = tab;
+    chrome.storage.local.set({ lastActiveTab });
+    console.log("updatedUrl",tab?.url)
+    
+    // debugger
     // const { isAutoPopup } =
     //   (await chrome.storage.local.get("isAutoPopup")) || false;
 
-    if (tab.url.startsWith("chrome")) return; // to prevent popup from opening on chrome:// urls
+    if (tab.url.startsWith("chrome")) {
+      return
+    }
 
-    // debugger;
+    
     if (tab?.url && !isNotValidUrl(tab, appEnv) && autoPopupEnabled) {
+      console.log("updatedTab",tab?.url)
       if (popupWindowId) {
-        // chrome.windows.remove(popupWindowId, () => {
-        //   popupWindowId = null;
-        // })
-        chrome.windows.get(popupWindowId, (window) => {
-          if (window) {
-            // chrome.windows.remove(popupWindowId, () => {
-            //   popupWindowId = null;
-            // });
-          } else {
-            console.warn(
-              "Popup window with ID",
-              popupWindowId,
-              "may have already been closed."
-            );
-          }
-        });
+       await chrome.windows.remove(popupWindowId, () => {
+          popupWindowId = null;
+        })
       }
 
       chrome.windows.getCurrent({ populate: true }, (currentWindow) => {
@@ -98,6 +103,8 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     }
   }
 });
+
+
 
 function updateIconBasedOnCookie() {
   chrome.cookies.get(
@@ -368,7 +375,10 @@ async function establishWsConnection(url) {
   });
 
   socket.addEventListener("error", (error) => {
-    console.error("WebSocket error:", error);
+    chrome.runtime.sendMessage({
+      action: "websocketError",
+      message: "WebSocket  connection error, Please retry!",
+    });
   });
 
   socket.addEventListener("close", (event) => {

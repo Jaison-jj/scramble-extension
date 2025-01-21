@@ -6,8 +6,18 @@ const devUrls = [
 ];
 
 export const isNotValidUrl = (tab, env) => {
-  const urlsToCheck = env === "dev" ? devUrls : autoPopupCheckUrls;
+  if (!tab?.url || !env) {
+    return true;
+  }
 
-  return !urlsToCheck.some((url) => tab?.url === url);
+  let urlsToCheck;
+
+  if (env === "dev") {
+    urlsToCheck = devUrls;
+  } else {
+
+    urlsToCheck = autoPopupCheckUrls.filter((url) => url.includes(`/${env}/`));
+  }
+
+  return !urlsToCheck.some((url) => tab.url === url);
 };
-

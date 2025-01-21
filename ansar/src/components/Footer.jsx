@@ -3,9 +3,11 @@ import ToggleButton from "./utils/ToggleButton";
 import PropTypes from "prop-types";
 
 const Footer = (props) => {
-  const { codeType, setCodeType, closeText="Logout" } = props;
+  const { codeType, setCodeType, closeText = "Logout" } = props;
 
   const onClickRemoveCreds = async () => {
+    if (closeText === "Close") return window.close();
+
     await chrome.runtime.sendMessage({
       action: "dropUserCreds",
     });

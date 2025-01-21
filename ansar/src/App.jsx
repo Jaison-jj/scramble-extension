@@ -14,6 +14,7 @@ import ClockIcon from "./assets/icons/clock.svg";
 import RefreshIcon from "./assets/icons/refresh.svg";
 import InvalidSession from "./components/InvalidSession";
 import { cn } from "./utils/cn";
+import WsError from "./components/WsError";
 
 const NotSupportedUrl = ({ isShow }) => (
   <div
@@ -45,6 +46,8 @@ function App() {
     showMask: false,
   });
   const [appEnv, setAppEnv] = useState(null);
+  const [wsMessage, setWsMessage] = useState("");
+  const [closeText, setCloseText] = useState("Logout");
 
   const onClickReload = () => {
     chrome?.runtime?.sendMessage({ action: "open_popup" });
@@ -125,9 +128,16 @@ function App() {
         setCodeType(null);
         setStep("error");
         break;
+      case "websocketError":
+        setCodeType(null);
+        setStep("wsError");
+        setWsMessage(request?.message);
+        setCloseText("Close");
+        break;
       case "unsupportedSite":
         setCodeType(null);
         setStep("unsupportedSite");
+        setCloseText("Close");
         break;
       case "appEnvToPopup":
         setAppEnv(request.selectedEnv);
@@ -148,10 +158,10 @@ function App() {
 
   const codeUrl = `https://app.${appEnv}.scrambleid.com/qr?id=${codeData?.code}:${codeData?.qid}`;
 
-  window.onbeforeunload = function(event) {
-    chrome.runtime.sendMessage({ action: "popupWindowClosed" }); 
+  window.onbeforeunload = function (event) {
+    chrome.runtime.sendMessage({ action: "popupWindowClosed" });
   };
-  
+
   const renderCode = () => {
     if (!codeData) {
       return (
@@ -210,10 +220,11 @@ function App() {
       />
       <NotSupportedUrl isShow={step === "unsupportedSite"} />
       <InvalidSession isShow={step === "error"} onClickReload={onClickReload} />
+      <WsError isShow={step === "wsError"} message={wsMessage} />
       <Footer
         codeType={codeType}
         setCodeType={setCodeType}
-        closeText={step === "unsupportedSite" ? "Close" : "Logout"}
+        closeText={closeText}
       />
     </div>
   );
