@@ -5,7 +5,9 @@ const devUrls = [
   "https://demoguest.com/vdi/ldap",
 ];
 
-export const isNotValidUrl = (tab, env) => {
+export const isNotValidUrl =  (tab, env) => {
+  // debugger
+  
   if (!tab?.url || !env) {
     return true;
   }
@@ -15,7 +17,6 @@ export const isNotValidUrl = (tab, env) => {
   if (env === "dev") {
     urlsToCheck = devUrls;
   } else {
-
     urlsToCheck = autoPopupCheckUrls.filter((url) => url.includes(`/${env}/`));
   }
 

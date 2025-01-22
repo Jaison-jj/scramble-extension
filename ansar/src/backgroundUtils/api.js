@@ -1,20 +1,24 @@
-let appEnv = "dev";
+// let appEnv = "dev";
 
-chrome.storage.onChanged.addListener((changes, namespace) => {
-  // console.log("selectedEnv", changes?.selectedEnv);
-  const { selectedEnv } = changes ?? {};
-  const newEnv = selectedEnv?.newValue;
+// chrome.storage.onChanged.addListener((changes, namespace) => {
+//   const { selectedEnv } = changes ?? {};
+//   const newEnv = selectedEnv?.newValue;
 
-  if (newEnv !== undefined) {
-    appEnv = newEnv;
-  }
-});
+//   if (newEnv !== undefined) {
+//     appEnv = newEnv;
+//   }
+// });
 
 export async function getQidOrDid() {
-  const {selectedEnv} = await chrome.storage.local.get("selectedEnv");
+  const { selectedEnv } =
+    (await chrome.storage.local.get("selectedEnv"));
+  const { selectedOrg } = await chrome.storage.local.get("selectedOrg");
+
+  const base64Org =
+    selectedOrg === "ukg" ? "dWtnfHx1a2ctcG9ydGFs" : "ZGVtfHxkZW0tcG9ydGFs";
 
   const res = await fetch(
-    `https://wsp2.${selectedEnv}.scrambleid.com/login/portal/ZGVtfHxkZW0tcG9ydGFs?format=json`,
+    `https://wsp2.${selectedEnv}.scrambleid.com/login/portal/${base64Org}?format=json`,
     {
       headers: {
         accept: "*/*",
@@ -39,9 +43,8 @@ export async function getQidOrDid() {
 }
 
 export const fetchCredentials = async (appUrl) => {
-  const {selectedEnv} = await chrome.storage.local.get("selectedEnv");
+  const { selectedEnv } = await chrome.storage.local.get("selectedEnv");
 
-  
   const response = await fetch(
     `https://${selectedEnv}.scrambleid.com/api/v1/lid/start-session`,
     {
@@ -71,6 +74,8 @@ export const initialFetchUser = async (
 ) => {
   const wsIncomingMessage = JSON.parse(wsEventData.data);
   const { lastActiveTab } = await chrome.storage.local.get("lastActiveTab");
+  const { selectedEnv } = await chrome.storage.local.get("selectedEnv");
+  const { selectedOrg } = await chrome.storage.local.get("selectedOrg");
 
   try {
     await chrome.runtime.sendMessage({
@@ -83,7 +88,7 @@ export const initialFetchUser = async (
     chrome.cookies.set(
       {
         url: `https://${selectedEnv}.scrambleid.com`,
-        name: import.meta.env.VITE_COOKIE_NAME,
+        name: `scramble-session-${selectedOrg}`,
         value: cookie,
         expirationDate: cookieExpireAt,
       },
@@ -94,7 +99,7 @@ export const initialFetchUser = async (
             const data = await fetchCredentials(lastActiveTab?.url);
             await chrome.runtime.sendMessage({
               action: "hideLoaderShowCredentials",
-              user: data.user || { userName: "hello", password: "123" },
+              user: data.user || { userName: "test", password: "test" },
             });
 
             await chrome.storage.local.set({

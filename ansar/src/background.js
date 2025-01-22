@@ -10,23 +10,13 @@ import { isNotValidUrl } from "./backgroundUtils/helpers";
 const SCR_ONLINE = "assets/images/online48.png";
 const SCR_OFFLINE = "assets/images/offline48.png";
 
+// let appEnv = "dev";
 const epochTime = Math.floor(Date.now() / 1000) * 1000;
-
 let socket = null;
 let wsEventData = null;
 let lastActiveTab = null;
-let appEnv = "dev";
 let popupWindowId = null;
 let autoPopupEnabled = false;
-
-// chrome.storage.onChanged.addListener((changes, namespace) => {
-//   for (let [key, { oldValue, newValue }] of Object.entries(changes)) {
-//     console.log(
-//       `Storage key "${key}" in namespace "${namespace}" changed.`,
-//       `Old value was "${oldValue}", new value is "${newValue}".`
-//     );
-//   }
-// });
 
 chrome.tabs.onActivated.addListener((activeInfo) => {
   chrome.tabs.get(activeInfo.tabId, (tab) => {
@@ -38,37 +28,31 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
   });
 });
 
-chrome.runtime.onInstalled.addListener(function(details){
-  chrome.storage.local.set({ selectedEnv:'dev' });
+chrome.runtime.onInstalled.addListener(function (details) {
+  chrome.storage.local.set({ selectedEnv: "dev", selectedOrg: "dem" });
 });
 
 // ##################
 // ##################
 // ##################
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-
-  
   if (changeInfo.status === "complete" && tab?.url) {
 
     lastActiveTab = tab;
+  const { selectedEnv } = await chrome.storage.local.get("selectedEnv");
+
     chrome.storage.local.set({ lastActiveTab });
-    console.log("updatedUrl",tab?.url)
-    
-    // debugger
-    // const { isAutoPopup } =
-    //   (await chrome.storage.local.get("isAutoPopup")) || false;
 
     if (tab.url.startsWith("chrome")) {
-      return
+      return;
     }
 
-    
-    if (tab?.url && !isNotValidUrl(tab, appEnv) && autoPopupEnabled) {
-      console.log("updatedTab",tab?.url)
+    if (tab?.url && !isNotValidUrl(tab, selectedEnv) && autoPopupEnabled) {
+      console.log("updatedTab", tab?.url);
       if (popupWindowId) {
-       await chrome.windows.remove(popupWindowId, () => {
+        await chrome.windows.remove(popupWindowId, () => {
           popupWindowId = null;
-        })
+        });
       }
 
       chrome.windows.getCurrent({ populate: true }, (currentWindow) => {
@@ -104,13 +88,18 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   }
 });
 
+async function updateIconBasedOnCookie() {
+  const { selectedOrg } = await chrome.storage.local.get("selectedOrg");
+  const { selectedEnv } = await chrome.storage.local.get("selectedEnv");
 
+  console.log("icon-selectedOrg", selectedOrg);
 
-function updateIconBasedOnCookie() {
-  chrome.cookies.get(
+  if (!selectedOrg) return;
+
+  await chrome.cookies.get(
     {
-      url: `https://${appEnv}.scrambleid.com`,
-      name: import.meta.env.VITE_COOKIE_NAME,
+      url: `https://${selectedEnv}.scrambleid.com`,
+      name: `scramble-session-${selectedOrg}`,
     },
     (cookie) => {
       const iconPath = cookie ? SCR_ONLINE : SCR_OFFLINE;
@@ -121,11 +110,12 @@ function updateIconBasedOnCookie() {
 updateIconBasedOnCookie();
 
 async function getAuthDataSetWsCon() {
+  const { selectedEnv } = await chrome.storage.local.get("selectedEnv");
+
   const authCodeData = await getQidOrDid();
   chrome.storage.local.set({ authCodeData });
 
-  const epochTime = Math.floor(Date.now() / 1000) * 1000;
-  const wsUrl = `wss://wsp.${appEnv}.scrambleid.com/v1?action=PORTAL&qid=${authCodeData?.qid}&did=${authCodeData.did}&org=${authCodeData?.code}&epoch=${epochTime}&amznReqId=${authCodeData?.amznReqId}`;
+  const wsUrl = `wss://wsp.${selectedEnv}.scrambleid.com/v1?action=PORTAL&qid=${authCodeData?.qid}&did=${authCodeData.did}&org=${authCodeData?.code}&epoch=${epochTime}&amznReqId=${authCodeData?.amznReqId}`;
 
   await establishWsConnection(wsUrl);
 
@@ -136,15 +126,17 @@ async function getAuthDataSetWsCon() {
 }
 
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
+  const { selectedEnv } = await chrome.storage.local.get("selectedEnv");
+
   switch (request.action) {
     case "popupWindowClosed":
       popupWindowId = null;
       break;
     case "saveUserSettings":
-      appEnv = request.selectedEnv;
       await chrome.storage.local.set({
         isAutoPopup: request.enableAuto,
         selectedEnv: request.selectedEnv,
+        selectedOrg: request.selectedOrg,
       });
       autoPopupEnabled = request.enableAuto;
       break;
@@ -152,7 +144,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
       await handleOpenPopup();
       await chrome.runtime.sendMessage({
         action: "appEnvToPopup",
-        selectedEnv: appEnv,
+        selectedEnv: selectedEnv,
       });
       break;
     case "restart_qr_timer":
@@ -173,9 +165,13 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
 });
 
 async function handleOpenPopup() {
-  console.log("isNotValidUrl", isNotValidUrl(lastActiveTab, appEnv));
+  const { selectedEnv } = await chrome.storage.local.get("selectedEnv");
+  
+  console.log("isNotValidUrl", isNotValidUrl(lastActiveTab, selectedEnv));
 
-  if (isNotValidUrl(lastActiveTab, appEnv)) {
+  const { selectedOrg } = await chrome.storage.local.get("selectedOrg");
+
+  if (isNotValidUrl(lastActiveTab, selectedEnv)) {
     chrome.runtime.sendMessage({
       action: "unsupportedSite",
     });
@@ -184,8 +180,8 @@ async function handleOpenPopup() {
 
   chrome.cookies.get(
     {
-      url: `https://${appEnv}.scrambleid.com`,
-      name: import.meta.env.VITE_COOKIE_NAME,
+      url: `https://${selectedEnv}.scrambleid.com`,
+      name: `scramble-session-${selectedOrg}`,
     },
     async (cookie) => {
       if (cookie && isCookieValueExpired(cookie)) {
@@ -271,6 +267,9 @@ async function handleSwitchCodeType(codeType) {
 }
 
 async function handleDropUserCreds() {
+  const { selectedOrg } = await chrome.storage.local.get("selectedOrg");
+  const { selectedEnv } = await chrome.storage.local.get("selectedEnv");
+
   chrome.storage.local.clear(() => {
     if (chrome.runtime.lastError) {
       console.error("Error clearing storage:", chrome.runtime.lastError);
@@ -278,10 +277,26 @@ async function handleDropUserCreds() {
       console.log("Local storage cleared successfully.");
     }
   });
+
+  await chrome.storage.local.remove(
+    ["authCodeData", "isAutoPopup ", "User"],
+    (result) => {
+      if (chrome.runtime.lastError) {
+        console.error(
+          "Error removing keys from storage:",
+          chrome.runtime.lastError
+        );
+      } else {
+        console.log("storage local removed successfully.");
+      }
+    }
+    
+  );
+
   chrome.cookies.remove(
     {
-      url: `https://${appEnv}.scrambleid.com`,
-      name: import.meta.env.VITE_COOKIE_NAME,
+      url: `https://${selectedEnv}.scrambleid.com`,
+      name: `scramble-session-${selectedOrg}`,
     },
     () => {
       if (chrome.runtime.lastError) {
@@ -292,10 +307,18 @@ async function handleDropUserCreds() {
       }
     }
   );
+
+  await chrome.storage.local.set({
+    isAutoPopup: false,
+    selectedEnv: "dev",
+    selectedOrg: "dem",
+  });
+  
 }
 
 async function establishWsConnection(url) {
   socket = new WebSocket(url);
+  const { selectedEnv } = await chrome.storage.local.get("selectedEnv");
   const { authCodeData: scrambleState } = await chrome.storage.local.get(
     "authCodeData"
   );
@@ -320,7 +343,7 @@ async function establishWsConnection(url) {
 
         const uqId = JSON.parse(wsIncomingMessage.value).uqId;
 
-        const tempWsUrl = `wss://wsp.${appEnv}.scrambleid.com/v1?action=PORTAL&qid=${authCodeData?.qid}&did=${uqId}&org=${authCodeData?.code}&epoch=${epochTime}`;
+        const tempWsUrl = `wss://wsp.${selectedEnv}.scrambleid.com/v1?action=PORTAL&qid=${authCodeData?.qid}&did=${uqId}&org=${authCodeData?.code}&epoch=${epochTime}`;
 
         await establishWsConnection(tempWsUrl);
 
