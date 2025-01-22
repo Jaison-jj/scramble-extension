@@ -22,6 +22,7 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
   chrome.tabs.get(activeInfo.tabId, (tab) => {
     if (tab && tab.url) {
       lastActiveTab = tab;
+      console.log(tab.url);
       chrome.storage.local.set({ lastActiveTab });
       console.log(tab.url);
     }
@@ -29,7 +30,7 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
 });
 
 chrome.runtime.onInstalled.addListener(function (details) {
-  chrome.storage.local.set({ selectedEnv: "dev", selectedOrg: "dem" });
+  chrome.storage.local.set({ selectedEnv: "demo", selectedOrg: "dem" });
 });
 
 // ##################
@@ -37,17 +38,24 @@ chrome.runtime.onInstalled.addListener(function (details) {
 // ##################
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (changeInfo.status === "complete" && tab?.url) {
-
-    lastActiveTab = tab;
-  const { selectedEnv } = await chrome.storage.local.get("selectedEnv");
-
-    chrome.storage.local.set({ lastActiveTab });
-
+    
     if (tab.url.startsWith("chrome")) {
       return;
     }
+    
+    lastActiveTab = tab;
+    const { selectedEnv } = await chrome.storage.local.get("selectedEnv");
+    const { selectedOrg } = await chrome.storage.local.get("selectedOrg");
 
-    if (tab?.url && !isNotValidUrl(tab, selectedEnv) && autoPopupEnabled) {
+    chrome.storage.local.set({ lastActiveTab });
+
+    
+
+    if (
+      tab?.url &&
+      !isNotValidUrl(tab, selectedEnv, selectedOrg) &&
+      autoPopupEnabled
+    ) {
       console.log("updatedTab", tab?.url);
       if (popupWindowId) {
         await chrome.windows.remove(popupWindowId, () => {
@@ -166,12 +174,11 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
 
 async function handleOpenPopup() {
   const { selectedEnv } = await chrome.storage.local.get("selectedEnv");
-  
-  console.log("isNotValidUrl", isNotValidUrl(lastActiveTab, selectedEnv));
-
   const { selectedOrg } = await chrome.storage.local.get("selectedOrg");
 
-  if (isNotValidUrl(lastActiveTab, selectedEnv)) {
+  console.log("isNotValidUrl", isNotValidUrl(lastActiveTab, selectedEnv));
+
+  if (isNotValidUrl(lastActiveTab, selectedEnv, selectedOrg)) {
     chrome.runtime.sendMessage({
       action: "unsupportedSite",
     });
@@ -270,13 +277,13 @@ async function handleDropUserCreds() {
   const { selectedOrg } = await chrome.storage.local.get("selectedOrg");
   const { selectedEnv } = await chrome.storage.local.get("selectedEnv");
 
-  chrome.storage.local.clear(() => {
-    if (chrome.runtime.lastError) {
-      console.error("Error clearing storage:", chrome.runtime.lastError);
-    } else {
-      console.log("Local storage cleared successfully.");
-    }
-  });
+  // chrome.storage.local.clear(() => {
+  //   if (chrome.runtime.lastError) {
+  //     console.error("Error clearing storage:", chrome.runtime.lastError);
+  //   } else {
+  //     console.log("Local storage cleared successfully.");
+  //   }
+  // });
 
   await chrome.storage.local.remove(
     ["authCodeData", "isAutoPopup ", "User"],
@@ -290,7 +297,6 @@ async function handleDropUserCreds() {
         console.log("storage local removed successfully.");
       }
     }
-    
   );
 
   chrome.cookies.remove(
@@ -310,10 +316,9 @@ async function handleDropUserCreds() {
 
   await chrome.storage.local.set({
     isAutoPopup: false,
-    selectedEnv: "dev",
-    selectedOrg: "dem",
+    selectedEnv: selectedEnv || "demo",
+    selectedOrg: selectedOrg || "dem",
   });
-  
 }
 
 async function establishWsConnection(url) {

@@ -8,20 +8,27 @@ saveButton.addEventListener("click", () => {
   const selectedEnv = envSelect.value;
   const selectedOrg = orgSelect.value;
 
-  debugger
   chrome.runtime.sendMessage({
     action: "saveUserSettings",
     enableAuto: isChecked,
     selectedEnv,
     selectedOrg,
   });
+
+  alert("Settings saved successfully.");
+  console.log(
+    JSON.stringify({
+      env: selectedEnv,
+      org: selectedOrg,
+      autoPopup: isChecked,
+    })
+  );
 });
 
-document.addEventListener("DOMContentLoaded", () => {
-  chrome.storage.local.get(["selectedEnv", "selectedOrg"], (result) => {
-    const env = result?.selectedEnv || "dev";
+document.addEventListener("DOMContentLoaded", async () => {
+  await chrome.storage.local.get(["selectedEnv", "selectedOrg"], (result) => {
+    const env = result?.selectedEnv || "demo";
     const org = result?.selectedOrg || "dem";
-    debugger
     envSelect.value = env;
     orgSelect.value = org;
   });

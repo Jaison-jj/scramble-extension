@@ -10,15 +10,4 @@ export const autoPopupCheckUrls = [
   "https://demoguest.com/uat/ukg/radius",
   "https://demoguest.com/prod/ukg/ldap",
   "https://demoguest.com/prod/ukg/radius",
-  
-  "https://demoguest.com/vdi/ldap",
-  "https://demoguest.com/vdi/radius",
-  "https://demoguest.com/qa/vdi/ldap",
-  "https://demoguest.com/qa/vdi/radius",
-  "https://demoguest.com/demo/vdi/ldap",
-  "https://demoguest.com/demo/vdi/radius",
-  "https://demoguest.com/uat/vdi/ldap",
-  "https://demoguest.com/uat/vdi/radius",
-  "https://demoguest.com/prod/vdi/ldap",
-  "https://demoguest.com/prod/vdi/radius",
 ];
