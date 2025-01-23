@@ -18,6 +18,28 @@ let lastActiveTab = null;
 let popupWindowId = null;
 let autoPopupEnabled = false;
 
+async function updateIconBasedOnCookie() {
+  const { selectedOrg } = await chrome.storage.local.get("selectedOrg");
+  const { selectedEnv } = await chrome.storage.local.get("selectedEnv");
+
+  console.log("icon-selectedOrg", selectedOrg);
+
+  if (!selectedOrg) return;
+
+  await chrome.cookies.get(
+    {
+      url: `https://${selectedEnv}.scrambleid.com`,
+      name: `scramble-session-${selectedOrg}`,
+    },
+    (cookie) => {
+      // debugger
+      const iconPath = cookie ? SCR_ONLINE : SCR_OFFLINE;
+      chrome.action.setIcon({ path: iconPath });
+    }
+  );
+}
+updateIconBasedOnCookie();
+
 chrome.tabs.onActivated.addListener((activeInfo) => {
   chrome.tabs.get(activeInfo.tabId, (tab) => {
     if (tab && tab.url) {
@@ -29,8 +51,9 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
   });
 });
 
-chrome.runtime.onInstalled.addListener(function (details) {
-  chrome.storage.local.set({ selectedEnv: "demo", selectedOrg: "dem" });
+chrome.runtime.onInstalled.addListener(async function (details) {
+  await chrome.storage.local.set({ selectedEnv: "demo", selectedOrg: "dem" });
+  await updateIconBasedOnCookie();
 });
 
 // ##################
@@ -38,18 +61,15 @@ chrome.runtime.onInstalled.addListener(function (details) {
 // ##################
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (changeInfo.status === "complete" && tab?.url) {
-    
     if (tab.url.startsWith("chrome")) {
       return;
     }
-    
+
     lastActiveTab = tab;
     const { selectedEnv } = await chrome.storage.local.get("selectedEnv");
     const { selectedOrg } = await chrome.storage.local.get("selectedOrg");
 
     chrome.storage.local.set({ lastActiveTab });
-
-    
 
     if (
       tab?.url &&
@@ -96,26 +116,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   }
 });
 
-async function updateIconBasedOnCookie() {
-  const { selectedOrg } = await chrome.storage.local.get("selectedOrg");
-  const { selectedEnv } = await chrome.storage.local.get("selectedEnv");
 
-  console.log("icon-selectedOrg", selectedOrg);
-
-  if (!selectedOrg) return;
-
-  await chrome.cookies.get(
-    {
-      url: `https://${selectedEnv}.scrambleid.com`,
-      name: `scramble-session-${selectedOrg}`,
-    },
-    (cookie) => {
-      const iconPath = cookie ? SCR_ONLINE : SCR_OFFLINE;
-      chrome.action.setIcon({ path: iconPath });
-    }
-  );
-}
-updateIconBasedOnCookie();
 
 async function getAuthDataSetWsCon() {
   const { selectedEnv } = await chrome.storage.local.get("selectedEnv");
@@ -147,6 +148,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         selectedOrg: request.selectedOrg,
       });
       autoPopupEnabled = request.enableAuto;
+      updateIconBasedOnCookie();
       break;
     case "open_popup":
       await handleOpenPopup();
@@ -193,7 +195,6 @@ async function handleOpenPopup() {
     async (cookie) => {
       if (cookie && isCookieValueExpired(cookie)) {
         handleDropUserCreds();
-        await chrome.storage.local.set({ User: null });
       } else if (cookie && !isCookieValueExpired(cookie)) {
         const creds = await fetchCredentials(lastActiveTab?.url);
         await chrome.runtime.sendMessage({

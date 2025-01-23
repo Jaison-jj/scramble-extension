@@ -1,17 +1,5 @@
-// let appEnv = "dev";
-
-// chrome.storage.onChanged.addListener((changes, namespace) => {
-//   const { selectedEnv } = changes ?? {};
-//   const newEnv = selectedEnv?.newValue;
-
-//   if (newEnv !== undefined) {
-//     appEnv = newEnv;
-//   }
-// });
-
 export async function getQidOrDid() {
-  const { selectedEnv } =
-    (await chrome.storage.local.get("selectedEnv"));
+  const { selectedEnv } = await chrome.storage.local.get("selectedEnv");
   const { selectedOrg } = await chrome.storage.local.get("selectedOrg");
 
   const base64Org =
@@ -90,7 +78,8 @@ export const initialFetchUser = async (
         url: `https://${selectedEnv}.scrambleid.com`,
         name: `scramble-session-${selectedOrg}`,
         value: cookie,
-        expirationDate: cookieExpireAt,
+        expirationDate: cookieExpireAt / 1000,
+        domain: `.${selectedEnv}.scrambleid.com`,
       },
       async (cookie) => {
         if (cookie) {

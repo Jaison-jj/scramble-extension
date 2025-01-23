@@ -2,7 +2,7 @@ import CopyIcon from "../../assets/icons/copy.svg";
 import PropTypes from "prop-types";
 
 const TextInput = (props) => {
-  const { type, htmlFor, name, label, value } = props;
+  const { type, htmlFor, name, label, value, placeholder } = props;
 
   async function onClickCopy(textToCopy) {
     try {
@@ -23,7 +23,7 @@ const TextInput = (props) => {
       </label>
       <input
         type={type}
-        placeholder="username"
+        placeholder={placeholder}
         name={name}
         className="rounded-2xl w-full dark:text-white border border-[#E1E0DE] dark:border-[#E1E0DE1A] h-[60px] p-4 bg-transparent outline-none text-lg font-medium text-[#151515]"
         value={value}

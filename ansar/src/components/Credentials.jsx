@@ -1,6 +1,5 @@
 import { cn } from "../utils/cn";
 import TextInput from "./utils/TextInput";
-import { useState } from "react";
 
 const Credentials = ({ isShow, userId = "sample", password = "sample" }) => {
   return (
@@ -23,6 +22,7 @@ const Credentials = ({ isShow, userId = "sample", password = "sample" }) => {
           name="username"
           label="User ID"
           value={userId}
+          placeholder="Username"
         />
         <TextInput
           type="password"
@@ -30,6 +30,7 @@ const Credentials = ({ isShow, userId = "sample", password = "sample" }) => {
           name="password"
           label="Password"
           value={password}
+          placeholder="Password"
         />
       </div>
     </div>
