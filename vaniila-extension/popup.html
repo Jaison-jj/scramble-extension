@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QrCODE</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <!-- Timer -->
+    <header class="header">
+      <img src="assets/images/headerLogoWhite.svg" alt="logo" />
+    </header>
+
+    <button id="openNewTabBtn">Login</button>
+
+    <div class="loader-container" id="loader">
+      <p class="loader-title">Your scrambleID is generating...</p>
+      <div class="custom-loader"></div>
+      <p id="error-message" class="error-message"></p>
+    </div>
+
+    <div class="creds-container" id="creds-container">
+      <p class="creds-info">
+        ScrambleID generated login ID for <span>“Democorp”</span>
+      </p>
+
+      <div class="field">
+        <label for="username">User ID</label>
+        <input
+          type="text"
+          name="username"
+          id="username"
+          class="inputfield"
+          disabled
+        />
+        <button id="copyUsernameBtn" class="copyIcon">
+          <img src="assets/icons/copy.svg" alt="copy"  />
+        </button>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input
+          name="password"
+          type="password"
+          id="password"
+          class="inputfield"
+          disabled
+        />
+        <button id="copyPasswordBtn" class="copyIcon">
+          <img src="assets/icons/copy.svg" alt="copy"/>
+        </button>
+      </div>
+    </div>
+    <!-- <script src="qrcode.min.js"></script> -->
+    <script src="popup.js" type="module"></script>
+  </body>
+</html>

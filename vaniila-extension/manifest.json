@@ -1,0 +1,57 @@
+{
+  "manifest_version": 3,
+  "name": "ScrambleID",
+  "version": "1.0",
+  "description": "Only you can be you.",
+  "background": {
+    "service_worker": "background.js",
+     "type": "module"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "assets/icons/default16.png",
+      "48": "assets/icons/default48.png",
+      "128": "assets/icons/default128.png"
+    }
+  },
+  "icons": {
+    "16": "assets/icons/default16.png",
+    "48": "assets/icons/default48.png",
+    "128": "assets/icons/default128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://demoguest.com/qa/vdi"],
+      "run_at": "document_end",
+      "js": ["content.js","config.js"],
+       "type": "module"
+    }
+  ],
+  "permissions": [
+    "storage",
+    "tabs",
+    "scripting",
+    "activeTab",
+    "webNavigation",
+    "cookies",
+    "bookmarks",
+    "contextMenus"
+  ],
+  "host_permissions": ["<all_urls>"],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "qrcode.min.js",
+        "images/scrambleOnline16.png",
+        "images/scrambleOffline16.png",
+        "fonts/*",
+        "config.js"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'"
+  }
+}

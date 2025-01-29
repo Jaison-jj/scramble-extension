@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>ScrambleID Extension Options</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <div id="parent-container">
+      <div>
+        <h4 class="disclaimer-title">Disclaimer</h4>
+        <p class="disclaimer-text">
+          If the extension settings are not changed, the env is
+          <strong>demo</strong> and org is <strong>dem</strong> by default, so
+          the extensions will work only for
+          <span>"https://demoguest.com/demo/vdi/ldap"</span> and
+          <span>"https://demoguest.com/demo/vdi/radius"</span>.
+        </p>
+      </div>
+
+      <div class="checkbox-container">
+        <label for="autoPopupCheckbox">Enable automatic popup? </label>
+        <input
+          type="checkbox"
+          id="autoPopupCheckbox"
+          name="autoPopupCheckbox"
+        />
+      </div>
+
+      <div class="envSelect">
+        <label for="env-select">Choose Environment:</label>
+        <select name="envs" id="env-select">
+          <option value="dev">Dev</option>
+          <option value="demo">Demo</option>
+          <option value="uat">UAT</option>
+          <option value="qa">QA</option>
+          <option value="prod">Prod</option>
+        </select>
+      </div>
+
+      <div class="orgSelect">
+        <label for="org-select">Choose Org:</label>
+        <select name="envs" id="org-select">
+          <option value="dem">DEM</option>
+          <option value="ukg">UKG</option>
+        </select>
+      </div>
+
+      <button id="saveButton">Save</button>
+    </div>
+
+    <script src="options.js"></script>
+  </body>
+</html>
