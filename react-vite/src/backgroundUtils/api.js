@@ -1,12 +1,14 @@
+import { checkUrlForGeneratingQidDid } from "./helpers";
+
 export async function getQidOrDid() {
   const { selectedEnv } = await chrome.storage.local.get("selectedEnv");
-  const { selectedOrg } = await chrome.storage.local.get("selectedOrg");
 
-  const base64Org =
-    selectedOrg === "ukg" ? "dWtnfHx1a2ctcG9ydGFs" : "ZGVtfHxkZW0tcG9ydGFs";
+  const { lastActiveTab } = await chrome.storage.local.get("lastActiveTab");
+
+  const b64org = checkUrlForGeneratingQidDid(lastActiveTab?.url);
 
   const res = await fetch(
-    `https://wsp2.${selectedEnv}.scrambleid.com/login/portal/${base64Org}?format=json`,
+    `https://wsp2.${selectedEnv}.scrambleid.com/login/portal/${b64org}?format=json`,
     {
       headers: {
         accept: "*/*",
@@ -73,7 +75,7 @@ export const initialFetchUser = async (
     const cookie = JSON.parse(wsIncomingMessage.value).cookie;
     // const cookieExpireAt = JSON.parse(wsIncomingMessage.value).expiresAt;
 
-    const oneYearInSeconds = 365 * 24 * 60 * 60;
+    const oneYearInSeconds = 365 * 24 * 60 * 60 * 1000;
 
     chrome.cookies.set(
       {
@@ -85,11 +87,10 @@ export const initialFetchUser = async (
       },
       async (cookie) => {
         if (cookie) {
-
-          chrome.alarms.create("myAlarm", {
-            delayInMinutes: 1,
-            periodInMinutes: 0, 
-          });
+          // chrome.alarms.create("myAlarm", {
+          //   delayInMinutes: 1,
+          //   periodInMinutes: 0,
+          // });
 
           console.log("Cookie set successfully:");
           try {

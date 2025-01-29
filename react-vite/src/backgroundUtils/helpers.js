@@ -39,3 +39,38 @@ export const isNotValidUrl = (tab, env, org) => {
 
   return !urlsToCheck.some((url) => tab.url === url);
 };
+
+const dem_ldap = "ZGVtfHxsZGFwYXBwMQ==";
+const dem_radius = "ZGVtfHxyYWRpdXNhcHAx";
+const ukg_ldap = "dWtnfHxsZGFwYXBwMQ==";
+const ukg_radius = "dWtnfHxyYWRpdXNhcHAx";
+
+export const checkUrlForGeneratingQidDid = (url) => {
+  try {
+    const urlObj = new URL(url);
+    const urlParts = urlObj.pathname.split("/").filter(Boolean);
+
+    let env = "dev";
+    let org, protocol;
+
+    if (urlParts.length === 3) {
+      [env, org, protocol] = urlParts;
+    } else if (urlParts.length === 2) {
+      [org, protocol] = urlParts;
+    } else {
+      return null;
+    }
+
+    const mapping = {
+      "vdi|ldap": dem_ldap,
+      "vdi|radius": dem_radius,
+      "ukg|ldap": ukg_ldap,
+      "ukg|radius": ukg_radius,
+    };
+
+    return mapping[`${org}|${protocol}`] || null;
+  } catch (error) {
+    console.error("Invalid URL:", error);
+    return null;
+  }
+};

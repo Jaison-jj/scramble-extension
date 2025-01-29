@@ -347,7 +347,7 @@ async function establishWsConnection(url) {
 
         const uqId = JSON.parse(wsIncomingMessage.value).uqId;
 
-        const tempWsUrl = `wss://wsp.${selectedEnv}.scrambleid.com/v1?action=PORTAL&qid=${authCodeData?.qid}&did=${uqId}&org=${authCodeData?.code}&epoch=${epochTime}`;
+        const tempWsUrl = `wss://wsp.${selectedEnv}.scrambleid.com/v1?action=LID&qid=${authCodeData?.qid}&did=${uqId}&org=${authCodeData?.code}&epoch=${epochTime}`;
 
         await establishWsConnection(tempWsUrl);
 
@@ -439,12 +439,12 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === "myAlarm") {
     console.log("Alarm triggered! Time's up!");
     // Perform some action here, like sending a notification
-    await chrome.notifications.create({
-      type: "basic",
-      iconUrl: "assets/images/online48.png",
-      title: "Alarm",
-      message: "1 minute has passed!",
-    });
+    // await chrome.notifications.create({
+    //   type: "basic",
+    //   iconUrl: "assets/images/online48.png",
+    //   title: "Alarm",
+    //   message: "1 minute has passed!",
+    // });
     await chrome.alarms.clear("myAlarm");
   }
 });
