@@ -71,18 +71,26 @@ export const initialFetchUser = async (
     });
 
     const cookie = JSON.parse(wsIncomingMessage.value).cookie;
-    const cookieExpireAt = JSON.parse(wsIncomingMessage.value).expiresAt;
+    // const cookieExpireAt = JSON.parse(wsIncomingMessage.value).expiresAt;
+
+    const oneYearInSeconds = 365 * 24 * 60 * 60;
 
     chrome.cookies.set(
       {
         url: `https://${selectedEnv}.scrambleid.com`,
         name: `scramble-session-${selectedOrg}`,
         value: cookie,
-        expirationDate: cookieExpireAt / 1000,
+        expirationDate: oneYearInSeconds,
         domain: `.${selectedEnv}.scrambleid.com`,
       },
       async (cookie) => {
         if (cookie) {
+
+          chrome.alarms.create("myAlarm", {
+            delayInMinutes: 1,
+            periodInMinutes: 0, 
+          });
+
           console.log("Cookie set successfully:");
           try {
             const data = await fetchCredentials(lastActiveTab?.url);

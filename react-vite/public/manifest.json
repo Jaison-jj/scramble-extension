@@ -27,7 +27,8 @@
     "cookies",
     "bookmarks",
     "contextMenus",
-    "alarms"
+    "alarms",
+    "notifications"
   ],
   "content_scripts": [
     {
