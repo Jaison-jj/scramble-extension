@@ -1,33 +1,24 @@
-import { checkUrlForGeneratingQidDid } from "./helpers";
+import { establishWsConnection } from "../background";
+import { checkUrlAndGetB64Org } from "./helpers";
+
+const epochTime = Math.floor(Date.now() / 1000) * 1000;
+
+const codes = {
+  org_app_not_exist: 38,
+  no_cookie: 86,
+  cookie_expired: 87,
+};
 
 export async function getQidOrDid() {
   const { selectedEnv } = await chrome.storage.local.get("selectedEnv");
 
   const { lastActiveTab } = await chrome.storage.local.get("lastActiveTab");
 
-  const b64org = checkUrlForGeneratingQidDid(lastActiveTab?.url);
+  const b64org = checkUrlAndGetB64Org(lastActiveTab?.url).replace(/=*$/, "");
+  const url = `https://wsp2.${selectedEnv}.scrambleid.com/login/lid/${b64org}?format=json`;
+  // const url = `https://${selectedEnv}.scrambleid.com/api/v1/login/lid/${b64org}?format=json`;
 
-  const res = await fetch(
-    `https://wsp2.${selectedEnv}.scrambleid.com/login/portal/${b64org}?format=json`,
-    {
-      headers: {
-        accept: "*/*",
-        "accept-language": "en-US,en;q=0.9",
-        origin: "http://localhost:3100",
-        priority: "u=1, i",
-        referer: "http://localhost:3100/",
-        "sec-ch-ua":
-          '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
-        "sec-ch-ua-mobile": "?0",
-        "sec-ch-ua-platform": '"Windows"',
-        "sec-fetch-dest": "empty",
-        "sec-fetch-mode": "cors",
-        "sec-fetch-site": "cross-site",
-        "user-agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-      },
-    }
-  );
+  const res = await fetch(url);
   const data = await res.json();
   return data;
 }
@@ -55,7 +46,24 @@ export const fetchCredentials = async (appUrl) => {
     );
   }
 
-  return response.json();
+  const responseData = await response.json();
+  const newAuthCodeData = { ...responseData?.loginData };
+
+  if (responseData.resultCode === codes.cookie_expired) {
+    await handleCookieExpiration(newAuthCodeData, selectedEnv);
+    return;
+  }
+
+  if (responseData.resultCode === codes.no_cookie) {
+    //
+  }
+
+  await chrome.runtime.sendMessage({
+    action: "hideLoaderShowCredentials",
+    user: responseData.user || { userName: null, password: null },
+  });
+
+  return responseData;
 };
 
 export const initialFetchUser = async (
@@ -87,11 +95,6 @@ export const initialFetchUser = async (
       },
       async (cookie) => {
         if (cookie) {
-          // chrome.alarms.create("myAlarm", {
-          //   delayInMinutes: 1,
-          //   periodInMinutes: 0,
-          // });
-
           console.log("Cookie set successfully:");
           try {
             const data = await fetchCredentials(lastActiveTab?.url);
@@ -130,4 +133,27 @@ export async function startTimerAlarm(duration) {
   });
 
   chrome.alarms.create("timerAlarm", { delayInMinutes: duration });
+}
+
+async function handleCookieExpiration(newAuthCodeData, selectedEnv) {
+  await chrome.storage.local.set({
+    authCodeData: newAuthCodeData,
+  });
+
+  await chrome.storage.local.remove(["User"], async () => {
+    if (chrome.runtime.lastError) {
+      console.error("error removing+", chrome.runtime.lastError);
+    } else {
+      console.log("removed successfully");
+
+      const newWsUrl = `wss://wsp.${selectedEnv}.scrambleid.com/v1?action=LID&qid=${newAuthCodeData?.qid}&did=${newAuthCodeData?.did}&org=${newAuthCodeData?.code}&epoch=${epochTime}&amznReqId=${newAuthCodeData?.amznReqId}`;
+
+      await establishWsConnection(newWsUrl);
+
+      await chrome.runtime.sendMessage({
+        action: "transfer_auth_code",
+        authCodeData: newAuthCodeData,
+      });
+    }
+  });
 }

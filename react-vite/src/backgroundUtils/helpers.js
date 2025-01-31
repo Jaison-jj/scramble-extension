@@ -45,7 +45,7 @@ const dem_radius = "ZGVtfHxyYWRpdXNhcHAx";
 const ukg_ldap = "dWtnfHxsZGFwYXBwMQ==";
 const ukg_radius = "dWtnfHxyYWRpdXNhcHAx";
 
-export const checkUrlForGeneratingQidDid = (url) => {
+export const checkUrlAndGetB64Org = (url) => {
   try {
     const urlObj = new URL(url);
     const urlParts = urlObj.pathname.split("/").filter(Boolean);
@@ -74,3 +74,4 @@ export const checkUrlForGeneratingQidDid = (url) => {
     return null;
   }
 };
+
