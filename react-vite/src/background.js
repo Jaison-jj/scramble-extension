@@ -22,8 +22,6 @@ async function updateIconBasedOnCookie() {
   const { selectedOrg } = await chrome.storage.local.get("selectedOrg");
   const { selectedEnv } = await chrome.storage.local.get("selectedEnv");
 
-  console.log("icon-selectedOrg", selectedOrg);
-
   if (!selectedOrg) return;
 
   await chrome.cookies.get(
@@ -32,7 +30,6 @@ async function updateIconBasedOnCookie() {
       name: `scramble-session-${selectedOrg}`,
     },
     (cookie) => {
-      // debugger
       const iconPath = cookie ? SCR_ONLINE : SCR_OFFLINE;
       chrome.action.setIcon({ path: iconPath });
     }
@@ -52,7 +49,10 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
 });
 
 chrome.runtime.onInstalled.addListener(async function (details) {
-  await chrome.storage.local.set({ selectedEnv: "demo", selectedOrg: "dem" });
+  await chrome.storage.local.set({
+    selectedEnv: "demo",
+    selectedOrg: "dem",
+  });
   await updateIconBasedOnCookie();
 });
 
@@ -122,7 +122,7 @@ async function getAuthDataSetWsCon() {
   const authCodeData = await getQidOrDid();
   chrome.storage.local.set({ authCodeData });
 
-  const wsUrl = `wss://wsp.${selectedEnv}.scrambleid.com/v1?action=PORTAL&qid=${authCodeData?.qid}&did=${authCodeData.did}&org=${authCodeData?.code}&epoch=${epochTime}&amznReqId=${authCodeData?.amznReqId}`;
+  const wsUrl = `wss://wsp.${selectedEnv}.scrambleid.com/v1?action=LID&qid=${authCodeData?.qid}&did=${authCodeData.did}&org=${authCodeData?.code}&epoch=${epochTime}&amznReqId=${authCodeData?.amznReqId}`;
 
   await establishWsConnection(wsUrl);
 
@@ -191,14 +191,8 @@ async function handleOpenPopup() {
       name: `scramble-session-${selectedOrg}`,
     },
     async (cookie) => {
-      if (cookie && isCookieValueExpired(cookie)) {
-        handleDropUserCreds();
-      } else if (cookie && !isCookieValueExpired(cookie)) {
-        const creds = await fetchCredentials(lastActiveTab?.url);
-        await chrome.runtime.sendMessage({
-          action: "hideLoaderShowCredentials",
-          user: creds.user || { userName: null, password: null },
-        });
+      if (cookie) {
+        await fetchCredentials(lastActiveTab?.url);
       } else {
         getAuthDataSetWsCon();
       }
@@ -216,8 +210,8 @@ async function handleRestartQrTimer() {
         op: "QID",
         value: scrambleState.qid,
         org: scrambleState.code,
-        source: "PORTAL",
-        action: "PORTAL",
+        source: "LID",
+        action: "LID",
         amznReqId: scrambleState.amznReqId,
       };
       socket.send(JSON.stringify(message));
@@ -238,8 +232,8 @@ async function handleRestartTypeCodeTimer() {
         op: "DID",
         value: scrambleState.qid,
         org: scrambleState.code,
-        source: "PORTAL",
-        action: "PORTAL",
+        source: "LID",
+        action: "LID",
         amznReqId: scrambleState.amznReqId,
       };
       socket.send(JSON.stringify(message));
@@ -260,8 +254,8 @@ async function handleSwitchCodeType(codeType) {
         op: codeType,
         value: scrambleState.qid || "null",
         org: scrambleState.code || "null",
-        source: "PORTAL",
-        action: "PORTAL",
+        source: "LID",
+        action: "LID",
         amznReqId: scrambleState.amznReqId,
       };
       socket.send(JSON.stringify(message));
@@ -272,55 +266,7 @@ async function handleSwitchCodeType(codeType) {
   }
 }
 
-async function handleDropUserCreds() {
-  const { selectedOrg } = await chrome.storage.local.get("selectedOrg");
-  const { selectedEnv } = await chrome.storage.local.get("selectedEnv");
-
-  // chrome.storage.local.clear(() => {
-  //   if (chrome.runtime.lastError) {
-  //     console.error("Error clearing storage:", chrome.runtime.lastError);
-  //   } else {
-  //     console.log("Local storage cleared successfully.");
-  //   }
-  // });
-
-  await chrome.storage.local.remove(
-    ["authCodeData", "isAutoPopup ", "User"],
-    (result) => {
-      if (chrome.runtime.lastError) {
-        console.error(
-          "Error removing keys from storage:",
-          chrome.runtime.lastError
-        );
-      } else {
-        console.log("storage local removed successfully.");
-      }
-    }
-  );
-
-  chrome.cookies.remove(
-    {
-      url: `https://${selectedEnv}.scrambleid.com`,
-      name: `scramble-session-${selectedOrg}`,
-    },
-    () => {
-      if (chrome.runtime.lastError) {
-        console.error("Error removing cookie:", chrome.runtime.lastError);
-      } else {
-        console.log("Cookie removed successfully.");
-        updateIconBasedOnCookie();
-      }
-    }
-  );
-
-  await chrome.storage.local.set({
-    isAutoPopup: false,
-    selectedEnv: selectedEnv || "demo",
-    selectedOrg: selectedOrg || "dem",
-  });
-}
-
-async function establishWsConnection(url) {
+export async function establishWsConnection(url) {
   socket = new WebSocket(url);
   const { selectedEnv } = await chrome.storage.local.get("selectedEnv");
   const { authCodeData: scrambleState } = await chrome.storage.local.get(
@@ -358,7 +304,7 @@ async function establishWsConnection(url) {
           wsEvent: wsIncomingMessage,
         });
         break;
-      case "PORTAL":
+      case "LID":
         initialFetchUser(wsEventData, updateIconBasedOnCookie);
         break;
       case "QID":
@@ -427,7 +373,7 @@ async function updateAuthCodeData(newData) {
 chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === "timerAlarm") {
     console.log("Timer finished!");
-    const creds = await fetchCredentials(lastActiveTab?.url);
+    // const creds = await fetchCredentials(lastActiveTab?.url);
 
     // set the password to refreshPassword and send it to the popup.
     // await chrome.runtime.sendMessage({
@@ -449,7 +395,47 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   }
 });
 
-function isCookieValueExpired(cookieValue) {
+function hasCookieExpired(cookieValue) {
   const expDate = cookieValue.expirationDate;
   return Date(expDate) < Date();
+}
+
+export async function handleDropUserCreds() {
+  const { selectedOrg } = await chrome.storage.local.get("selectedOrg");
+  const { selectedEnv } = await chrome.storage.local.get("selectedEnv");
+
+  await chrome.storage.local.remove(
+    ["authCodeData", "isAutoPopup ", "User"],
+    (result) => {
+      if (chrome.runtime.lastError) {
+        console.error(
+          "Error removing keys from storage:",
+          chrome.runtime.lastError
+        );
+      } else {
+        console.log("storage local removed successfully.");
+      }
+    }
+  );
+
+  chrome.cookies.remove(
+    {
+      url: `https://${selectedEnv}.scrambleid.com`,
+      name: `scramble-session-${selectedOrg}`,
+    },
+    () => {
+      if (chrome.runtime.lastError) {
+        console.error("Error removing cookie:", chrome.runtime.lastError);
+      } else {
+        console.log("Cookie removed successfully.");
+        updateIconBasedOnCookie();
+      }
+    }
+  );
+
+  await chrome.storage.local.set({
+    isAutoPopup: false,
+    selectedEnv: selectedEnv || "demo",
+    selectedOrg: selectedOrg || "dem",
+  });
 }
