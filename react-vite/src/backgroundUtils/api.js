@@ -1,5 +1,5 @@
 import { establishWsConnection } from "../background";
-import { checkUrlAndGetB64Org } from "./helpers";
+import { checkUrlAndGetB64Org, getCookie, isSafari } from "./helpers";
 
 const epochTime = Math.floor(Date.now() / 1000) * 1000;
 
@@ -25,17 +25,28 @@ export async function getQidOrDid() {
 
 export const fetchCredentials = async (appUrl) => {
   const { selectedEnv } = await chrome.storage.local.get("selectedEnv");
+  const { selectedOrg } = await chrome.storage.local.get("selectedOrg");
 
-  const response = await fetch(
-    `https://${selectedEnv}.scrambleid.com/api/v1/lid/start-session`,
-    {
-      method: "post",
-      credentials: "include",
-      body: JSON.stringify({
-        appUrl: appUrl || null,
-      }),
+  const apiUrl = `https://${selectedEnv}.scrambleid.com/api/v1/lid/start-session`;
+
+  const fetchOptions = {
+    method: "post",
+    body: JSON.stringify({ appUrl: appUrl || null }),
+  };
+
+  // Manually get the cookie and attach it to the request
+  if (isSafari()) {
+    const cookie = await getCookie(apiUrl, `scramble-session-${selectedOrg}`);
+    if (cookie) {
+      fetchOptions.headers = {
+        Cookie: cookie,
+      };
     }
-  );
+  } else {
+    fetchOptions.credentials = "include";
+  }
+
+  const response = await fetch(apiUrl, fetchOptions);
 
   if (!response.ok) {
     await chrome.runtime.sendMessage({
@@ -55,7 +66,7 @@ export const fetchCredentials = async (appUrl) => {
   }
 
   if (responseData.resultCode === codes.no_cookie) {
-    //
+    // Handle no cookie case
   }
 
   await chrome.runtime.sendMessage({
