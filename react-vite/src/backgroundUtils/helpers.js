@@ -75,3 +75,14 @@ export const checkUrlAndGetB64Org = (url) => {
   }
 };
 
+export function isSafari() {
+  return /Apple/.test(navigator.userAgent) && /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+}
+
+export async function getCookie(domain, name) {
+  return new Promise((resolve) => {
+    browser.cookies.get({ url: domain, name }, (cookie) => {
+      resolve(cookie ? `${cookie.name}=${cookie.value}` : null);
+    });
+  });
+}
