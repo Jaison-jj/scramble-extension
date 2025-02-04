@@ -45,13 +45,12 @@ function App() {
     username: "empty",
     password: "empty",
   });
-  
+
   const [mask, setMask] = useState({
     text: null,
     icon: null,
     showMask: false,
   });
-
 
   const onClickReload = () => {
     chrome?.runtime?.sendMessage({ action: "open_popup" });
@@ -64,7 +63,7 @@ function App() {
       case "popupWindowCreated":
         setIsAutoPopup(true);
         break;
-      
+
       case "transfer_auth_code":
         setCodeData(request.authCodeData);
         setCanShowCodeLoader(true);
@@ -155,14 +154,15 @@ function App() {
     }
   };
 
-  // useEffect(() => {
-  //   chrome?.runtime?.sendMessage({ action: "open_popup" });
-  //   chrome?.runtime?.onMessage?.addListener(handleMessages);
+  useEffect(() => {
+    if (!chrome || !chrome.runtime || !chrome.runtime.id) return;
+    chrome?.runtime?.sendMessage({ action: "open_popup" });
+    chrome?.runtime?.onMessage?.addListener(handleMessages);
 
-  //   return () => {
-  //     chrome?.runtime?.onMessage?.removeListener(handleMessages);
-  //   };
-  // }, []);
+    return () => {
+      chrome?.runtime?.onMessage?.removeListener(handleMessages);
+    };
+  }, []);
 
   const codeUrl = `https://app.${appEnv}.scrambleid.com/qr?id=${codeData?.code}:${codeData?.qid}`;
 
@@ -217,18 +217,20 @@ function App() {
   };
 
   return (
-     <>
-      {isAutoPopup && <AutoPopup 
-        codeData={codeData}
-        step={step}
-        codeType={codeType}
-        setCodeType={setCodeType}
-        mask={mask}
-        canShowCodeLoader={canShowCodeLoader}
-        setCanShowCodeLoader={setCanShowCodeLoader}
-        setMask={setMask}
-        codeUrl={codeUrl}
-      />}
+    <>
+      {isAutoPopup && (
+        <AutoPopup
+          codeData={codeData}
+          step={step}
+          codeType={codeType}
+          setCodeType={setCodeType}
+          mask={mask}
+          canShowCodeLoader={canShowCodeLoader}
+          setCanShowCodeLoader={setCanShowCodeLoader}
+          setMask={setMask}
+          codeUrl={codeUrl}
+        />
+      )}
       {!isAutoPopup && (
         <div className="w-[340px] min-h-[424px] font-switzer dark:bg-black flex flex-col">
           <Header />

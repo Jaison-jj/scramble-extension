@@ -4,7 +4,7 @@ import PropTypes from "prop-types";
 import { cn } from "../../utils/cn";
 
 const RectangularProgressbar = (props) => {
-  const { children, isShow, currentStep, code } = props;
+  const { children, isShow, currentStep, code, isAutoPopup = false } = props;
 
   const width = 104.7;
   const height = 42.5;
@@ -95,7 +95,11 @@ const RectangularProgressbar = (props) => {
           // }
         />
       </svg>
-      <div className="typeCode">
+      <div
+        className={cn("typeCode", {
+          autoPopup: isAutoPopup,
+        })}
+      >
         {React.isValidElement(children)
           ? React.cloneElement(children, {
               onResetTimer,

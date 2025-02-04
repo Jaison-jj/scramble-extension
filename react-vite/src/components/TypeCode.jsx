@@ -1,12 +1,18 @@
 import PropTypes from "prop-types";
 import HideTypeCode from "./HideTypeCode";
 import RefreshIcon from "../assets/icons/refresh.svg";
+import { cn } from "../utils/cn";
 
 const TypeCode = (props) => {
-  const { code, showQrMask, onResetTimer } = props;
+  const { code, showQrMask, onResetTimer, className } = props;
 
   return (
-    <div className="bg-white dark:bg-black  w-[260px] h-[100px] flex items-center justify-center">
+    <div
+      className={cn(
+        "bg-white dark:bg-black  w-[260px] h-[100px] flex items-center justify-center",
+        className
+      )}
+    >
       <p className="text-[hsl(0,0%,8%)] dark:text-white text-center text-[33px] not-italic font-medium leading-9 tracking-[16px]">
         {code.split("").map((char, index) => (
           <span

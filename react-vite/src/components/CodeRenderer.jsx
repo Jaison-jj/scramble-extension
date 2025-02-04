@@ -19,20 +19,20 @@ const CodeRenderer = ({
   setMask,
   codeUrl,
 }) => {
-//   if (codeData === null || !Object.keys(codeData).length) {
-//     return (
-//       <div
-//         className={cn(
-//           "h-full w-full rounded-md authBackground mx-auto flex justify-center items-center",
-//           {
-//             hidden: step?.length,
-//           }
-//         )}
-//       >
-//         <img src={LoaderIcon} alt="loading" className="animate-rotate" />
-//       </div>
-//     );
-//   }
+    if (codeData === null || !Object.keys(codeData).length) {
+      return (
+        <div
+          className={cn(
+            "h-full w-full rounded-md authBackground mx-auto flex justify-center items-center",
+            {
+              hidden: step?.length,
+            }
+          )}
+        >
+          <img src={LoaderIcon} alt="loading" className="animate-rotate" />
+        </div>
+      );
+    }
 
   return (
     <>
@@ -57,13 +57,16 @@ const CodeRenderer = ({
         isShow={codeType === "typeCode"}
         currentStep={step}
         code={codeData?.did}
+        isAutoPopup={true}
       >
-        <TypeCode code={codeData?.did || "123456"} key={codeData?.did} />
+        <TypeCode
+          code={codeData?.did || "123456"}
+          key={codeData?.did}
+          className="w-[333px] h-[130px]"
+        />
       </RectangularProgressbar>
     </>
   );
 };
 
 export default CodeRenderer;
-
-//   className="w-333 h-130"
