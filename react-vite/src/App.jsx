@@ -15,6 +15,7 @@ import RefreshIcon from "./assets/icons/refresh.svg";
 import InvalidSession from "./components/InvalidSession";
 import { cn } from "./utils/cn";
 import WsError from "./components/WsError";
+import AutoPopup from "./components/Autopopup";
 
 const NotSupportedUrl = ({ isShow }) => (
   <div
@@ -35,19 +36,22 @@ function App() {
   const [codeData, setCodeData] = useState(null);
   const [codeType, setCodeType] = useState("qrCode");
   const [step, setStep] = useState("");
+  const [appEnv, setAppEnv] = useState(null);
+  const [wsMessage, setWsMessage] = useState("");
+  const [closeText, setCloseText] = useState("Logout");
+  const [canShowCodeLoader, setCanShowCodeLoader] = useState(false);
+  const [isAutoPopup, setIsAutoPopup] = useState(true);
   const [creds, setCreds] = useState({
     username: "empty",
     password: "empty",
   });
-  const [canShowCodeLoader, setCanShowCodeLoader] = useState(false);
+  
   const [mask, setMask] = useState({
     text: null,
     icon: null,
     showMask: false,
   });
-  const [appEnv, setAppEnv] = useState(null);
-  const [wsMessage, setWsMessage] = useState("");
-  const [closeText, setCloseText] = useState("Logout");
+
 
   const onClickReload = () => {
     chrome?.runtime?.sendMessage({ action: "open_popup" });
@@ -57,6 +61,10 @@ function App() {
 
   const handleMessages = (request) => {
     switch (request.action) {
+      case "popupWindowCreated":
+        setIsAutoPopup(true);
+        break;
+      
       case "transfer_auth_code":
         setCodeData(request.authCodeData);
         setCanShowCodeLoader(true);
@@ -147,19 +155,19 @@ function App() {
     }
   };
 
-  useEffect(() => {
-    chrome?.runtime?.sendMessage({ action: "open_popup" });
-    chrome?.runtime?.onMessage.addListener(handleMessages);
+  // useEffect(() => {
+  //   chrome?.runtime?.sendMessage({ action: "open_popup" });
+  //   chrome?.runtime?.onMessage?.addListener(handleMessages);
 
-    return () => {
-      chrome?.runtime?.onMessage.removeListener(handleMessages);
-    };
-  }, []);
+  //   return () => {
+  //     chrome?.runtime?.onMessage?.removeListener(handleMessages);
+  //   };
+  // }, []);
 
   const codeUrl = `https://app.${appEnv}.scrambleid.com/qr?id=${codeData?.code}:${codeData?.qid}`;
 
   window.onbeforeunload = function (event) {
-    chrome.runtime.sendMessage({ action: "popupWindowClosed" });
+    chrome?.runtime?.sendMessage({ action: "popupWindowClosed" });
   };
 
   const renderCode = () => {
@@ -209,24 +217,42 @@ function App() {
   };
 
   return (
-    <div className="w-[340px] min-h-[424px] font-switzer dark:bg-black flex flex-col">
-      <Header />
-      <div className="flex-grow flex">{renderCode()}</div>
-      <Loader isShow={step === "callingCredsApi"} />
-      <Credentials
-        isShow={step === "showCredentials"}
-        userId={creds.username}
-        password={creds.password}
-      />
-      <NotSupportedUrl isShow={step === "unsupportedSite"} />
-      <InvalidSession isShow={step === "error"} onClickReload={onClickReload} />
-      <WsError isShow={step === "wsError"} message={wsMessage} />
-      <Footer
+     <>
+      {isAutoPopup && <AutoPopup 
+        codeData={codeData}
+        step={step}
         codeType={codeType}
         setCodeType={setCodeType}
-        closeText={closeText}
-      />
-    </div>
+        mask={mask}
+        canShowCodeLoader={canShowCodeLoader}
+        setCanShowCodeLoader={setCanShowCodeLoader}
+        setMask={setMask}
+        codeUrl={codeUrl}
+      />}
+      {!isAutoPopup && (
+        <div className="w-[340px] min-h-[424px] font-switzer dark:bg-black flex flex-col">
+          <Header />
+          <div className="flex-grow flex">{renderCode()}</div>
+          <Loader isShow={step === "callingCredsApi"} />
+          <Credentials
+            isShow={step === "showCredentials"}
+            userId={creds.username}
+            password={creds.password}
+          />
+          <NotSupportedUrl isShow={step === "unsupportedSite"} />
+          <InvalidSession
+            isShow={step === "error"}
+            onClickReload={onClickReload}
+          />
+          <WsError isShow={step === "wsError"} message={wsMessage} />
+          <Footer
+            codeType={codeType}
+            setCodeType={setCodeType}
+            closeText={closeText}
+          />
+        </div>
+      )}
+    </>
   );
 }
 

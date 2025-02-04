@@ -41,9 +41,7 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
   chrome.tabs.get(activeInfo.tabId, (tab) => {
     if (tab && tab.url) {
       lastActiveTab = tab;
-      console.log(tab.url);
       chrome.storage.local.set({ lastActiveTab });
-      console.log(tab.url);
     }
   });
 });
@@ -84,8 +82,10 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
       }
 
       chrome.windows.getCurrent({ populate: true }, (currentWindow) => {
-        const windowWidth = 356;
-        const windowHeight = 597;
+        // const windowWidth = 356;
+        // const windowHeight = 597;
+        const windowWidth = 1016;
+        const windowHeight = 539;
 
         const left =
           currentWindow.left +
@@ -105,10 +105,11 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
           },
           (window) => {
             popupWindowId = window?.id || null;
-            // chrome.runtime.sendMessage({
-            //   action: "getExtensionWindowId",
-            //   id: window.id,
-            // });
+            setTimeout(() => {
+              chrome.runtime.sendMessage({
+                action: "popupWindowCreated",
+              });
+            }, 500);
           }
         );
       });
