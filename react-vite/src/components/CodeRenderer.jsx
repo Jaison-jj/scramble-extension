@@ -6,8 +6,7 @@ import LoaderIcon from "../assets/icons/loading.svg";
 import { cn } from "../utils/cn";
 import NewCircularLoader from "./loader/NewCircularLoader";
 import RectangularProgressbar from "./loader/RectangularProgressbar";
-
-// w-[95%]
+import Loader from "./Loader";
 
 const CodeRenderer = ({
   codeData,
@@ -19,20 +18,9 @@ const CodeRenderer = ({
   setMask,
   codeUrl,
 }) => {
-    if (codeData === null || !Object.keys(codeData).length) {
-      return (
-        <div
-          className={cn(
-            "h-full w-full rounded-md authBackground mx-auto flex justify-center items-center",
-            {
-              hidden: step?.length,
-            }
-          )}
-        >
-          <img src={LoaderIcon} alt="loading" className="animate-rotate" />
-        </div>
-      );
-    }
+  if (codeData === null || !Object.keys(codeData).length) {
+    return null;
+  }
 
   return (
     <>

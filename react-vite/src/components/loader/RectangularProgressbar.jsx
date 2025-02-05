@@ -109,7 +109,8 @@ const RectangularProgressbar = (props) => {
       </div>
 
       <CopyCodeButton
-        className="absolute bottom-[43px] left-[131px]"
+        // className="absolute bottom-[43px] left-[131px]"
+        className="m-auto mt-16"
         copyCodeValue={code}
       />
     </div>

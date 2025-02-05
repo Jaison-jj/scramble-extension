@@ -5,11 +5,24 @@ import { useSystemTheme } from "../hooks/useSystemTheme";
 import DemoCorpImage from "../assets/images/demoCorpLogo.png";
 import OptionButton from "./OptionButton";
 import CodeRenderer from "./CodeRenderer";
+import Credentials from "./Credentials";
+import Loader from "./Loader";
 
 const AutoPopup = (props) => {
-  const { codeType, setCodeType } = props;
+  const { codeType, setCodeType, creds, step, isLoading } = props;
 
   const theme = useSystemTheme();
+
+  const onToggle = async () => {
+    const newCodeType = codeType === "qrCode" ? "typeCode" : "qrCode";
+
+    await chrome?.runtime?.sendMessage({
+      action: "switchCodeType",
+      codeType: newCodeType === "qrCode" ? "QID" : "DID",
+    });
+
+    setCodeType(newCodeType);
+  };
 
   return (
     <div className="container dark:bg-black h-[500px] min-w-[1000px] flex justify-between gap-5">
@@ -20,13 +33,13 @@ const AutoPopup = (props) => {
             title="Scan Code"
             selectedOption={codeType}
             type="qrCode"
-            setSelectedOption={setCodeType}
+            setSelectedOption={onToggle}
           />
           <OptionButton
             title="Type Code"
             selectedOption={codeType}
             type="typeCode"
-            setSelectedOption={setCodeType}
+            setSelectedOption={onToggle}
           />
         </div>
         <img
@@ -37,6 +50,12 @@ const AutoPopup = (props) => {
       </div>
       <div className="right w-[428px] mt-4 mr-4 mb-4 flex items-center">
         <CodeRenderer {...props} />
+        <Credentials
+          isShow={step === "showCredentials"}
+          userId={creds?.username || null}
+          password={creds?.password || null}
+        />
+        <Loader isShow={isLoading} />
       </div>
     </div>
   );
