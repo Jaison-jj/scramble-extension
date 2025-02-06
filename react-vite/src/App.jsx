@@ -26,7 +26,6 @@ function App() {
   const [canShowCodeLoader, setCanShowCodeLoader] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isAutoPopup, setIsAutoPopup] = useState(false);
-  const [waitForAutoPopup, setWaitForAutoPopup] = useState(false);
 
   const [creds, setCreds] = useState({
     username: "empty",
@@ -148,7 +147,6 @@ function App() {
   useEffect(() => {
     const isAutoPopupContext =
       window.location.search.includes("context=autoPopup");
-    setWaitForAutoPopup(true);
     if (!chrome || !chrome.runtime || !chrome.runtime.id) return;
     chrome?.runtime?.sendMessage({ action: "open_popup" });
     chrome?.runtime?.onMessage?.addListener(handleMessages);
@@ -160,7 +158,6 @@ function App() {
       } else {
         setIsAutoPopup(false);
       }
-      setWaitForAutoPopup(false);
     });
 
     return () => {
@@ -212,47 +209,41 @@ function App() {
 
   return (
     <>
-      {!waitForAutoPopup ? (
-        <>
-          {isAutoPopup ? (
-            <AutoPopup
-              codeData={codeData}
-              step={step}
-              codeType={codeType}
-              setCodeType={setCodeType}
-              mask={mask}
-              canShowCodeLoader={canShowCodeLoader}
-              setCanShowCodeLoader={setCanShowCodeLoader}
-              setMask={setMask}
-              codeUrl={codeUrl}
-              creds={creds}
-              isLoading={isLoading}
-            />
-          ) : (
-            <div className="w-[340px] min-h-[424px] font-switzer dark:bg-black flex flex-col">
-              <Header />
-              <div className="flex-grow flex">{renderCode()}</div>
-              <Credentials
-                isShow={step === "showCredentials"}
-                userId={creds.username}
-                password={creds.password}
-              />
-              <NotSupportedUrl isShow={step === "unsupportedSite"} />
-              <InvalidSession
-                isShow={step === "error"}
-                onClickReload={onClickReload}
-              />
-              <WsError isShow={step === "wsError"} message={wsMessage} />
-              <Footer
-                codeType={codeType}
-                setCodeType={setCodeType}
-                closeText={closeText}
-              />
-            </div>
-          )}
-        </>
+      {isAutoPopup ? (
+        <AutoPopup
+          codeData={codeData}
+          step={step}
+          codeType={codeType}
+          setCodeType={setCodeType}
+          mask={mask}
+          canShowCodeLoader={canShowCodeLoader}
+          setCanShowCodeLoader={setCanShowCodeLoader}
+          setMask={setMask}
+          codeUrl={codeUrl}
+          creds={creds}
+          isLoading={isLoading}
+        />
       ) : (
-        ""
+        <div className="w-[340px] min-h-[424px] font-switzer dark:bg-black flex flex-col">
+          <Header />
+          <div className="flex-grow flex">{renderCode()}</div>
+          <Credentials
+            isShow={step === "showCredentials"}
+            userId={creds.username}
+            password={creds.password}
+          />
+          <NotSupportedUrl isShow={step === "unsupportedSite"} />
+          <InvalidSession
+            isShow={step === "error"}
+            onClickReload={onClickReload}
+          />
+          <WsError isShow={step === "wsError"} message={wsMessage} />
+          <Footer
+            codeType={codeType}
+            setCodeType={setCodeType}
+            closeText={closeText}
+          />
+        </div>
       )}
     </>
   );
