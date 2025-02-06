@@ -1,11 +1,14 @@
 {
   "manifest_version": 3,
   "name": "ScrambleID",
-  "version": "1.9",
+  "version": "2.0",
   "description": "Only you can be you.",
   "background": {
     "service_worker": "background.js",
-    "type": "module"
+    "type": "module",
+    "content_security_policy": {
+      "extension_pages": "script-src 'self'; object-src 'none'; worker-src 'self' blob:"
+    }
   },
   "action": {
     "default_popup": "index.html",
