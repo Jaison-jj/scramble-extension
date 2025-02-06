@@ -10,7 +10,6 @@ import { isNotValidUrl } from "./backgroundUtils/helpers";
 const SCR_ONLINE = "assets/images/online48.png";
 const SCR_OFFLINE = "assets/images/offline48.png";
 
-// let appEnv = "dev";
 const epochTime = Math.floor(Date.now() / 1000) * 1000;
 let socket = null;
 let wsEventData = null;
@@ -97,7 +96,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 
         chrome.windows.create(
           {
-            url: "index.html",
+            url: "index.html?context=autoPopup",
             type: "popup",
             width: windowWidth,
             height: windowHeight,

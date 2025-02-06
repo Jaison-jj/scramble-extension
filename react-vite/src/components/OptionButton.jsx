@@ -3,7 +3,13 @@ import ArrowIcon from "../assets/icons/filledRightArrowIcon.svg?react";
 import { cn } from "../utils/cn";
 
 const OptionButton = (props) => {
-  const { title, selectedOption, type, setSelectedOption } = props;
+  const {
+    title,
+    selectedOption,
+    type,
+    setSelectedOption,
+    isDisabled = false,
+  } = props;
   return (
     <button
       className={cn(
@@ -14,6 +20,7 @@ const OptionButton = (props) => {
         }
       )}
       onClick={() => setSelectedOption(type)}
+      disabled={isDisabled}
     >
       <div className="flex gap-2 items-center">
         <InfoIcon className="w-6 h-6 text-black dark:fill-white" />

@@ -146,21 +146,22 @@ function App() {
   };
 
   useEffect(() => {
+    const isAutoPopupContext =
+      window.location.search.includes("context=autoPopup");
     setWaitForAutoPopup(true);
     if (!chrome || !chrome.runtime || !chrome.runtime.id) return;
     chrome?.runtime?.sendMessage({ action: "open_popup" });
     chrome?.runtime?.onMessage?.addListener(handleMessages);
 
     chrome.storage.local.get("isAutoPopup").then(({ isAutoPopup }) => {
-      if (isAutoPopup) {
+      if (isAutoPopup && isAutoPopupContext) {
         setIsAutoPopup(true);
         //send message here to show ordinary ui
       } else {
         setIsAutoPopup(false);
       }
+      setWaitForAutoPopup(false);
     });
-
-    setWaitForAutoPopup(false);
 
     return () => {
       chrome?.runtime?.onMessage?.removeListener(handleMessages);

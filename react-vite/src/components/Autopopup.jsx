@@ -34,12 +34,14 @@ const AutoPopup = (props) => {
             selectedOption={codeType}
             type="qrCode"
             setSelectedOption={onToggle}
+            isDisabled={step === "showCredentials"}
           />
           <OptionButton
             title="Type Code"
             selectedOption={codeType}
             type="typeCode"
             setSelectedOption={onToggle}
+            isDisabled={step === "showCredentials"}
           />
         </div>
         <img
