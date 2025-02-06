@@ -26,7 +26,7 @@ function App() {
   const [canShowCodeLoader, setCanShowCodeLoader] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isAutoPopup, setIsAutoPopup] = useState(false);
-  const [waitForAutoPopup, setWaitForAutoPopup] = useState(true);
+  const [waitForAutoPopup, setWaitForAutoPopup] = useState(false);
 
   const [creds, setCreds] = useState({
     username: "empty",
@@ -48,7 +48,7 @@ function App() {
   const handleMessages = (request) => {
     switch (request.action) {
       case "popupWindowCreated":
-        setIsAutoPopup(true);
+        // setIsAutoPopup(true);
         break;
 
       case "transfer_auth_code":
@@ -133,6 +133,7 @@ function App() {
         break;
       case "unsupportedSite":
         setCodeType(null);
+        setIsLoading(false);
         setStep("unsupportedSite");
         setCloseText("Close");
         break;
@@ -145,13 +146,21 @@ function App() {
   };
 
   useEffect(() => {
+    setWaitForAutoPopup(true);
     if (!chrome || !chrome.runtime || !chrome.runtime.id) return;
     chrome?.runtime?.sendMessage({ action: "open_popup" });
     chrome?.runtime?.onMessage?.addListener(handleMessages);
 
     chrome.storage.local.get("isAutoPopup").then(({ isAutoPopup }) => {
-      setWaitForAutoPopup(false);
+      if (isAutoPopup) {
+        setIsAutoPopup(true);
+        //send message here to show ordinary ui
+      } else {
+        setIsAutoPopup(false);
+      }
     });
+
+    setWaitForAutoPopup(false);
 
     return () => {
       chrome?.runtime?.onMessage?.removeListener(handleMessages);
@@ -202,43 +211,47 @@ function App() {
 
   return (
     <>
-      {isAutoPopup && (
-        <AutoPopup
-          codeData={codeData}
-          step={step}
-          codeType={codeType}
-          setCodeType={setCodeType}
-          mask={mask}
-          canShowCodeLoader={canShowCodeLoader}
-          setCanShowCodeLoader={setCanShowCodeLoader}
-          setMask={setMask}
-          codeUrl={codeUrl}
-          creds={creds}
-          isLoading={isLoading}
-        />
-      )}
-
-      {!isAutoPopup && (
-        <div className="w-[340px] min-h-[424px] font-switzer dark:bg-black flex flex-col">
-          <Header />
-          <div className="flex-grow flex">{renderCode()}</div>
-          <Credentials
-            isShow={step === "showCredentials"}
-            userId={creds.username}
-            password={creds.password}
-          />
-          <NotSupportedUrl isShow={step === "unsupportedSite"} />
-          <InvalidSession
-            isShow={step === "error"}
-            onClickReload={onClickReload}
-          />
-          <WsError isShow={step === "wsError"} message={wsMessage} />
-          <Footer
-            codeType={codeType}
-            setCodeType={setCodeType}
-            closeText={closeText}
-          />
-        </div>
+      {!waitForAutoPopup ? (
+        <>
+          {isAutoPopup ? (
+            <AutoPopup
+              codeData={codeData}
+              step={step}
+              codeType={codeType}
+              setCodeType={setCodeType}
+              mask={mask}
+              canShowCodeLoader={canShowCodeLoader}
+              setCanShowCodeLoader={setCanShowCodeLoader}
+              setMask={setMask}
+              codeUrl={codeUrl}
+              creds={creds}
+              isLoading={isLoading}
+            />
+          ) : (
+            <div className="w-[340px] min-h-[424px] font-switzer dark:bg-black flex flex-col">
+              <Header />
+              <div className="flex-grow flex">{renderCode()}</div>
+              <Credentials
+                isShow={step === "showCredentials"}
+                userId={creds.username}
+                password={creds.password}
+              />
+              <NotSupportedUrl isShow={step === "unsupportedSite"} />
+              <InvalidSession
+                isShow={step === "error"}
+                onClickReload={onClickReload}
+              />
+              <WsError isShow={step === "wsError"} message={wsMessage} />
+              <Footer
+                codeType={codeType}
+                setCodeType={setCodeType}
+                closeText={closeText}
+              />
+            </div>
+          )}
+        </>
+      ) : (
+        ""
       )}
     </>
   );

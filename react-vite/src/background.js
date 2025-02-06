@@ -50,6 +50,7 @@ chrome.runtime.onInstalled.addListener(async function (details) {
   await chrome.storage.local.set({
     selectedEnv: "demo",
     selectedOrg: "dem",
+    isAutoPopup: false,
   });
   await updateIconBasedOnCookie();
 });
