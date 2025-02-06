@@ -26,10 +26,15 @@ saveButton.addEventListener("click", () => {
 });
 
 document.addEventListener("DOMContentLoaded", async () => {
-  await chrome.storage.local.get(["selectedEnv", "selectedOrg"], (result) => {
-    const env = result?.selectedEnv || "demo";
-    const org = result?.selectedOrg || "dem";
-    envSelect.value = env;
-    orgSelect.value = org;
-  });
+  await chrome.storage.local.get(
+    ["selectedEnv", "selectedOrg", "isAutoPopup"],
+    (result) => {
+      const env = result?.selectedEnv || "demo";
+      const org = result?.selectedOrg || "dem";
+      const isAuto = result?.isAutoPopup || false;
+      envSelect.value = env;
+      orgSelect.value = org;
+      checkbox.checked  = isAuto;
+    }
+  );
 });
