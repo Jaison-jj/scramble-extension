@@ -10,7 +10,6 @@ import { isNotValidUrl } from "./backgroundUtils/helpers";
 const SCR_ONLINE = "assets/images/online48.png";
 const SCR_OFFLINE = "assets/images/offline48.png";
 
-// let appEnv = "dev";
 const epochTime = Math.floor(Date.now() / 1000) * 1000;
 let socket = null;
 let wsEventData = null;
@@ -41,9 +40,7 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
   chrome.tabs.get(activeInfo.tabId, (tab) => {
     if (tab && tab.url) {
       lastActiveTab = tab;
-      console.log(tab.url);
       chrome.storage.local.set({ lastActiveTab });
-      console.log(tab.url);
     }
   });
 });
@@ -52,6 +49,7 @@ chrome.runtime.onInstalled.addListener(async function (details) {
   await chrome.storage.local.set({
     selectedEnv: "demo",
     selectedOrg: "dem",
+    isAutoPopup: false,
   });
   await updateIconBasedOnCookie();
 });
@@ -84,8 +82,10 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
       }
 
       chrome.windows.getCurrent({ populate: true }, (currentWindow) => {
-        const windowWidth = 356;
-        const windowHeight = 597;
+        // const windowWidth = 356;
+        // const windowHeight = 597;
+        const windowWidth = 1016;
+        const windowHeight = 539;
 
         const left =
           currentWindow.left +
@@ -96,7 +96,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 
         chrome.windows.create(
           {
-            url: "index.html",
+            url: "index.html?context=autoPopup",
             type: "popup",
             width: windowWidth,
             height: windowHeight,
@@ -105,10 +105,11 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
           },
           (window) => {
             popupWindowId = window?.id || null;
-            // chrome.runtime.sendMessage({
-            //   action: "getExtensionWindowId",
-            //   id: window.id,
-            // });
+            setTimeout(() => {
+              chrome.runtime.sendMessage({
+                action: "popupWindowCreated",
+              });
+            }, 500);
           }
         );
       });

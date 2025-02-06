@@ -9,45 +9,34 @@ import RectangularProgressbar from "./components/loader/RectangularProgressbar";
 import TypeCode from "./components/TypeCode";
 import Credentials from "./components/Credentials";
 import Loader from "./components/Loader";
-import LoaderIcon from "./assets/icons/loading.svg";
 import ClockIcon from "./assets/icons/clock.svg";
 import RefreshIcon from "./assets/icons/refresh.svg";
 import InvalidSession from "./components/InvalidSession";
-import { cn } from "./utils/cn";
 import WsError from "./components/WsError";
-
-const NotSupportedUrl = ({ isShow }) => (
-  <div
-    className={cn(
-      "hidden h-[410px] w-[95%] authBackground rounded-md mx-auto flex-col items-center justify-center px-5 pt-[32px]",
-      {
-        flex: isShow,
-      }
-    )}
-  >
-    <p className="font-semibold text-lg dark:text-white">
-      This url is not supported!
-    </p>
-  </div>
-);
+import AutoPopup from "./components/Autopopup";
+import NotSupportedUrl from "./components/NotSupportedUrl";
 
 function App() {
   const [codeData, setCodeData] = useState(null);
   const [codeType, setCodeType] = useState("qrCode");
   const [step, setStep] = useState("");
+  const [appEnv, setAppEnv] = useState(null);
+  const [wsMessage, setWsMessage] = useState("");
+  const [closeText, setCloseText] = useState("Logout");
+  const [canShowCodeLoader, setCanShowCodeLoader] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAutoPopup, setIsAutoPopup] = useState(false);
+
   const [creds, setCreds] = useState({
     username: "empty",
     password: "empty",
   });
-  const [canShowCodeLoader, setCanShowCodeLoader] = useState(false);
+
   const [mask, setMask] = useState({
     text: null,
     icon: null,
     showMask: false,
   });
-  const [appEnv, setAppEnv] = useState(null);
-  const [wsMessage, setWsMessage] = useState("");
-  const [closeText, setCloseText] = useState("Logout");
 
   const onClickReload = () => {
     chrome?.runtime?.sendMessage({ action: "open_popup" });
@@ -57,11 +46,16 @@ function App() {
 
   const handleMessages = (request) => {
     switch (request.action) {
+      case "popupWindowCreated":
+        // setIsAutoPopup(true);
+        break;
+
       case "transfer_auth_code":
         setCodeData(request.authCodeData);
         setCanShowCodeLoader(true);
         setCodeType("qrCode");
         setStep("");
+        setIsLoading(false);
         break;
 
       case "firstTimeLoginShowTypeCode":
@@ -93,6 +87,7 @@ function App() {
         setStep("callingCredsApi");
         setCodeType("");
         setCodeData(null);
+        setIsLoading(true);
         break;
       case "hideLoaderShowCredentials":
         setStep("showCredentials");
@@ -102,6 +97,7 @@ function App() {
           username: request?.user?.userName || "",
           password: request?.user?.password || "",
         });
+        setIsLoading(false);
         break;
       case "restartQrTimer":
         setMask({ showMask: false });
@@ -136,6 +132,7 @@ function App() {
         break;
       case "unsupportedSite":
         setCodeType(null);
+        setIsLoading(false);
         setStep("unsupportedSite");
         setCloseText("Close");
         break;
@@ -148,34 +145,35 @@ function App() {
   };
 
   useEffect(() => {
+    const isAutoPopupContext =
+      window.location.search.includes("context=autoPopup");
+    if (!chrome || !chrome.runtime || !chrome.runtime.id) return;
     chrome?.runtime?.sendMessage({ action: "open_popup" });
-    chrome?.runtime?.onMessage.addListener(handleMessages);
+    chrome?.runtime?.onMessage?.addListener(handleMessages);
+
+    chrome.storage.local.get("isAutoPopup").then(({ isAutoPopup }) => {
+      if (isAutoPopup && isAutoPopupContext) {
+        setIsAutoPopup(true);
+        //send message here to show ordinary ui
+      } else {
+        setIsAutoPopup(false);
+      }
+    });
 
     return () => {
-      chrome?.runtime?.onMessage.removeListener(handleMessages);
+      chrome?.runtime?.onMessage?.removeListener(handleMessages);
     };
   }, []);
 
   const codeUrl = `https://app.${appEnv}.scrambleid.com/qr?id=${codeData?.code}:${codeData?.qid}`;
 
   window.onbeforeunload = function (event) {
-    chrome.runtime.sendMessage({ action: "popupWindowClosed" });
+    chrome?.runtime?.sendMessage({ action: "popupWindowClosed" });
   };
 
   const renderCode = () => {
-    if (!codeData) {
-      return (
-        <div
-          className={cn(
-            "h-[408px] w-[95%] rounded-md authBackground mx-auto flex justify-center items-center",
-            {
-              hidden: step.length,
-            }
-          )}
-        >
-          <img src={LoaderIcon} alt="loading" className="animate-rotate" />
-        </div>
-      );
+    if (isLoading) {
+      return <Loader isShow={true} />;
     }
 
     return (
@@ -188,6 +186,7 @@ function App() {
           setMask={setMask}
           copyCodeValue={`dem:${codeData?.qid}`}
           currentStep={step}
+          isLoading={isLoading}
         >
           <QrCode
             loading={!codeData}
@@ -209,24 +208,44 @@ function App() {
   };
 
   return (
-    <div className="w-[340px] min-h-[424px] font-switzer dark:bg-black flex flex-col">
-      <Header />
-      <div className="flex-grow flex">{renderCode()}</div>
-      <Loader isShow={step === "callingCredsApi"} />
-      <Credentials
-        isShow={step === "showCredentials"}
-        userId={creds.username}
-        password={creds.password}
-      />
-      <NotSupportedUrl isShow={step === "unsupportedSite"} />
-      <InvalidSession isShow={step === "error"} onClickReload={onClickReload} />
-      <WsError isShow={step === "wsError"} message={wsMessage} />
-      <Footer
-        codeType={codeType}
-        setCodeType={setCodeType}
-        closeText={closeText}
-      />
-    </div>
+    <>
+      {isAutoPopup ? (
+        <AutoPopup
+          codeData={codeData}
+          step={step}
+          codeType={codeType}
+          setCodeType={setCodeType}
+          mask={mask}
+          canShowCodeLoader={canShowCodeLoader}
+          setCanShowCodeLoader={setCanShowCodeLoader}
+          setMask={setMask}
+          codeUrl={codeUrl}
+          creds={creds}
+          isLoading={isLoading}
+        />
+      ) : (
+        <div className="w-[340px] min-h-[424px] font-switzer dark:bg-black flex flex-col">
+          <Header />
+          <div className="flex-grow flex">{renderCode()}</div>
+          <Credentials
+            isShow={step === "showCredentials"}
+            userId={creds.username}
+            password={creds.password}
+          />
+          <NotSupportedUrl isShow={step === "unsupportedSite"} />
+          <InvalidSession
+            isShow={step === "error"}
+            onClickReload={onClickReload}
+          />
+          <WsError isShow={step === "wsError"} message={wsMessage} />
+          <Footer
+            codeType={codeType}
+            setCodeType={setCodeType}
+            closeText={closeText}
+          />
+        </div>
+      )}
+    </>
   );
 }
 

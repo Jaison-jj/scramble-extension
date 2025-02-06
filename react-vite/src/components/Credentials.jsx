@@ -2,6 +2,16 @@ import { cn } from "../utils/cn";
 import TextInput from "./utils/TextInput";
 
 const Credentials = ({ isShow, userId = "sample", password = "sample" }) => {
+  /**
+   * This function is for just testing, will be removed
+   */
+  const logout = async () => {
+    await chrome?.runtime?.sendMessage({
+      action: "dropUserCreds",
+    });
+    await window?.close();
+  };
+
   return (
     <div
       className={cn(
@@ -13,7 +23,9 @@ const Credentials = ({ isShow, userId = "sample", password = "sample" }) => {
     >
       <p className="pb-[40px] text-xl font-switzer font-thin max-w-[270px] dark:text-white">
         ScrambleID generated login ID for{" "}
-        <span className="font-semibold">“Democorp”</span>
+        <span className="font-semibold" onClick={logout}>
+          “Democorp”
+        </span>
       </p>
       <div className="flex flex-col gap-5 w-full">
         <TextInput

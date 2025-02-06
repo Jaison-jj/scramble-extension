@@ -1,3 +1,9 @@
+body{
+  height: 100vh;
+  background-color: #ececec;
+
+}
+
 #parent-container {
   display: flex;
   flex-direction: column;
@@ -8,9 +14,28 @@
 .checkbox-container {
   display: flex;
   align-items: center;
+  gap: 3px;
 }
 
-.disclaimer-title{
+#autoPopupCheckbox {
+  transform: scale(1.5);
+  cursor: pointer;
+}
+
+.envSelect,
+.orgSelect {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+select {
+  border-radius: 10px;
+  padding: 5px;
+  cursor: pointer;
+}
+
+.disclaimer-title {
   margin: 0;
   font-size: medium;
   color: red;
@@ -24,4 +49,19 @@
 
 .disclaimer-text span {
   color: blue;
+}
+
+label {
+  font-size: medium;
+  font-weight: 400;
+}
+
+#saveButton {
+  padding: 7px 25px;
+  font-size: medium;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  border-radius: 10px;
+  background-color: #cdcdcd;
 }
