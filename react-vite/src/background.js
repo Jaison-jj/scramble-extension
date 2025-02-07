@@ -74,13 +74,6 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
       !isNotValidUrl(tab, selectedEnv, selectedOrg) &&
       autoPopupEnabled
     ) {
-      console.log("updatedTab", tab?.url);
-      if (popupWindowId) {
-        await chrome.windows.remove(popupWindowId, () => {
-          popupWindowId = null;
-        });
-      }
-
       chrome.windows.getCurrent({ populate: true }, (currentWindow) => {
         // const windowWidth = 356;
         // const windowHeight = 597;
@@ -103,9 +96,10 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
             left: left,
             top: top,
           },
-          (window) => {
+          async (window) => {
             popupWindowId = window?.id || null;
-            setTimeout(() => {
+            await chrome.storage.local.set({ autoPopupEnabledUrl: tab.url });
+            await setTimeout(() => {
               chrome.runtime.sendMessage({
                 action: "popupWindowCreated",
               });
@@ -133,10 +127,23 @@ async function getAuthDataSetWsCon() {
   });
 }
 
+function handlePageReload() {
+  if (!popupWindowId) return;
+
+  chrome.windows.remove(popupWindowId, () => {
+    popupWindowId = null;
+  });
+  console.log("popupWindowId closed", popupWindowId);
+}
+
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
   const { selectedEnv } = await chrome.storage.local.get("selectedEnv");
 
   switch (request.action) {
+    case "appPageReloaded":
+      handlePageReload();
+      break;
+
     case "popupWindowClosed":
       popupWindowId = null;
       break;

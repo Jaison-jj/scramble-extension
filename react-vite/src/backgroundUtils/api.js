@@ -16,7 +16,6 @@ export async function getQidOrDid() {
 
   const b64org = checkUrlAndGetB64Org(lastActiveTab?.url).replace(/=*$/, "");
   const url = `https://wsp2.${selectedEnv}.scrambleid.com/login/lid/${b64org}?format=json`;
-  // const url = `https://${selectedEnv}.scrambleid.com/api/v1/login/lid/${b64org}?format=json`;
 
   const res = await fetch(url);
   const data = await res.json();
