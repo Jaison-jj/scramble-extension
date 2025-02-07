@@ -69,6 +69,12 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 
     chrome.storage.local.set({ lastActiveTab });
 
+    if (popupWindowId) {
+      await chrome.windows.remove(popupWindowId, () => {
+        popupWindowId = null;
+      });
+    }
+
     if (
       tab?.url &&
       !isNotValidUrl(tab, selectedEnv, selectedOrg) &&
@@ -99,11 +105,6 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
           async (window) => {
             popupWindowId = window?.id || null;
             await chrome.storage.local.set({ autoPopupEnabledUrl: tab.url });
-            await setTimeout(() => {
-              chrome.runtime.sendMessage({
-                action: "popupWindowCreated",
-              });
-            }, 500);
           }
         );
       });
@@ -127,13 +128,12 @@ async function getAuthDataSetWsCon() {
   });
 }
 
-function handlePageReload() {
+async function handlePageReload() {
   if (!popupWindowId) return;
 
-  chrome.windows.remove(popupWindowId, () => {
+  await chrome.windows.remove(popupWindowId, () => {
     popupWindowId = null;
   });
-  console.log("popupWindowId closed", popupWindowId);
 }
 
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {

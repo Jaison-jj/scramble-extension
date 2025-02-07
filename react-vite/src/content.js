@@ -1,13 +1,22 @@
 const [navEntry] = performance.getEntriesByType("navigation");
 
-chrome.storage.local
-  .get(["lastActiveTab", "autoPopupEnabledUrl"])
-  .then(({ lastActiveTab, autoPopupEnabledUrl }) => {
-    if (
-      navEntry &&
-      navEntry.type === "reload" &&
-      autoPopupEnabledUrl === lastActiveTab.url
-    ) {
-      chrome.runtime.sendMessage({ action: "appPageReloaded" });
-    }
-  });
+async function checkAndSendMessage() {
+  const { lastActiveTab, autoPopupEnabledUrl } = await chrome.storage.local.get(
+    ["lastActiveTab", "autoPopupEnabledUrl"]
+  );
+
+  if (
+    navEntry &&
+    navEntry.type === "reload"
+    &&
+    autoPopupEnabledUrl === lastActiveTab.url
+  ) {
+    chrome.runtime.sendMessage({ action: "appPageReloaded" });
+  }
+}
+
+checkAndSendMessage();
+
+document.addEventListener("DOMContentLoaded", async () => {
+  await checkAndSendMessage();
+});

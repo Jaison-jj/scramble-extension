@@ -14,6 +14,7 @@ const NewCircularLoader = ({
   setMask,
   copyCodeValue,
   currentStep,
+  setIsLoading,
 }) => {
   const radius = 130;
   const strokeWidth = 6;
@@ -53,6 +54,7 @@ const NewCircularLoader = ({
   };
 
   const onResetTimer = async () => {
+    setIsLoading(true);
     await chrome?.runtime?.sendMessage({
       action: "restart_qr_timer",
     });
@@ -67,7 +69,6 @@ const NewCircularLoader = ({
 
   // Calculate stroke-dashoffset for the red progress part
   const offset = circumference - (progress / 100) * circumference;
-
 
   return (
     <div

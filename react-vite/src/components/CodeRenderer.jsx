@@ -2,11 +2,8 @@ import React from "react";
 
 import QrCode from "./QrCode";
 import TypeCode from "./TypeCode";
-import LoaderIcon from "../assets/icons/loading.svg";
-import { cn } from "../utils/cn";
 import NewCircularLoader from "./loader/NewCircularLoader";
 import RectangularProgressbar from "./loader/RectangularProgressbar";
-import Loader from "./Loader";
 
 const CodeRenderer = ({
   codeData,
@@ -17,6 +14,7 @@ const CodeRenderer = ({
   setCanShowCodeLoader,
   setMask,
   codeUrl,
+  setIsLoading,
 }) => {
   if (codeData === null || !Object.keys(codeData).length) {
     return null;
@@ -32,6 +30,7 @@ const CodeRenderer = ({
         setMask={setMask}
         copyCodeValue={`dem:${codeData?.qid}`}
         currentStep={step}
+        setIsLoading={setIsLoading}
       >
         <QrCode
           loading={!codeData}
