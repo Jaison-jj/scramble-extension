@@ -9,6 +9,7 @@ const OptionButton = (props) => {
     type,
     setSelectedOption,
     isDisabled = false,
+    infoText,
   } = props;
   return (
     <button
@@ -23,7 +24,9 @@ const OptionButton = (props) => {
       disabled={isDisabled}
     >
       <div className="flex gap-2 items-center">
-        <InfoIcon className="w-6 h-6 text-black dark:fill-white" />
+        <span title={infoText}>
+          <InfoIcon className="w-6 h-6 text-black dark:fill-white" />
+        </span>
         <span
           className={cn("text-black text-base font-semibold dark:text-white", {
             "font-bold": selectedOption === type,

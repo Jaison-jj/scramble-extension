@@ -46,10 +46,6 @@ function App() {
 
   const handleMessages = (request) => {
     switch (request.action) {
-      case "popupWindowCreated":
-        // setIsAutoPopup(true);
-        break;
-
       case "transfer_auth_code":
         setCodeData(request.authCodeData);
         setCanShowCodeLoader(true);
@@ -103,6 +99,7 @@ function App() {
         setMask({ showMask: false });
         setCodeData(request.newCodeData);
         setCanShowCodeLoader(true);
+        setIsLoading(false);
         break;
       case "restartTypeCodeTimer":
         setCodeData(request.newCodeData);
@@ -154,7 +151,6 @@ function App() {
     chrome.storage.local.get("isAutoPopup").then(({ isAutoPopup }) => {
       if (isAutoPopup && isAutoPopupContext) {
         setIsAutoPopup(true);
-        //send message here to show ordinary ui
       } else {
         setIsAutoPopup(false);
       }
@@ -187,6 +183,7 @@ function App() {
           copyCodeValue={`dem:${codeData?.qid}`}
           currentStep={step}
           isLoading={isLoading}
+          setIsLoading={setIsLoading}
         >
           <QrCode
             loading={!codeData}
@@ -222,6 +219,7 @@ function App() {
           codeUrl={codeUrl}
           creds={creds}
           isLoading={isLoading}
+          setIsLoading={setIsLoading}
         />
       ) : (
         <div className="w-[340px] min-h-[424px] font-switzer dark:bg-black flex flex-col">

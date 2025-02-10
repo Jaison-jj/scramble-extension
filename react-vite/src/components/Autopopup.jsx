@@ -35,6 +35,7 @@ const AutoPopup = (props) => {
             type="qrCode"
             setSelectedOption={onToggle}
             isDisabled={step === "showCredentials"}
+            infoText="Scan the QR code using your mobile device"
           />
           <OptionButton
             title="Type Code"
@@ -42,6 +43,7 @@ const AutoPopup = (props) => {
             type="typeCode"
             setSelectedOption={onToggle}
             isDisabled={step === "showCredentials"}
+            infoText="Type this code into your mobile app"
           />
         </div>
         <img
@@ -51,7 +53,7 @@ const AutoPopup = (props) => {
         />
       </div>
       <div className="right w-[428px] mt-4 mr-4 mb-4 flex items-center">
-        <CodeRenderer {...props} />
+        {!isLoading && <CodeRenderer {...props} />}
         <Credentials
           isShow={step === "showCredentials"}
           userId={creds?.username || null}

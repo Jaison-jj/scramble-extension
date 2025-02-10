@@ -1,14 +1,14 @@
 import { cn } from "../utils/cn";
 import PropTypes from "prop-types";
-
+// backdrop-blur-[30px]
 const HideTypeCode = ({ className, icon, text, isShow, onResetTimer }) => {
   return (
     <div
       onClick={onResetTimer}
       className={cn(
-        "flex w-[260px] h-[100px] flex-col justify-center items-center gap-2 shrink-0 backdrop-blur-[10px] cursor-pointer",
+        "flex w-[260px] h-[100px] flex-col justify-center items-center gap-2 shrink-0  cursor-pointer bg-white dark:bg-black",
         className,
-        { hidden: !isShow }
+        { "hidden dark:bg-black": !isShow }
       )}
     >
       <img src={icon} alt="refresh" className="invert-[1] dark:invert-0" />
