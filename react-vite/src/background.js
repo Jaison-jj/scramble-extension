@@ -54,61 +54,100 @@ chrome.runtime.onInstalled.addListener(async function (details) {
   await updateIconBasedOnCookie();
 });
 
-// ##################
-// ##################
-// ##################
-chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-  if (changeInfo.status === "complete" && tab?.url) {
-    if (tab.url.startsWith("chrome")) {
-      return;
-    }
+async function closeExistingPopup() {
+  if (!popupWindowId) return;
 
-    lastActiveTab = tab;
+  return new Promise((resolve) => {
+    chrome.windows.get(popupWindowId, {}, (window) => {
+      if (chrome.runtime.lastError) {
+        console.warn("Popup window not found, clearing popupWindowId.");
+        popupWindowId = null;
+        return resolve();
+      }
+
+      if (window && popupWindowId) {
+        chrome.windows.remove(popupWindowId, () => {
+          if (chrome.runtime.lastError) {
+            console.error(
+              "Error removing popup window:",
+              chrome.runtime.lastError
+            );
+          }
+          popupWindowId = null;
+          resolve();
+        });
+      } else {
+        popupWindowId = null;
+        resolve();
+      }
+    });
+  });
+}
+
+async function startNewWindowAutoPopup(tab) {
+  try {
     const { selectedEnv } = await chrome.storage.local.get("selectedEnv");
     const { selectedOrg } = await chrome.storage.local.get("selectedOrg");
 
-    chrome.storage.local.set({ lastActiveTab });
-
-    if (popupWindowId) {
-      await chrome.windows.remove(popupWindowId, () => {
-        popupWindowId = null;
-      });
+    if (
+      !tab?.url ||
+      isNotValidUrl(tab, selectedEnv, selectedOrg) ||
+      !autoPopupEnabled
+    ) {
+      return;
     }
 
-    if (
-      tab?.url &&
-      !isNotValidUrl(tab, selectedEnv, selectedOrg) &&
-      autoPopupEnabled
-    ) {
-      chrome.windows.getCurrent({ populate: true }, (currentWindow) => {
-        // const windowWidth = 356;
-        // const windowHeight = 597;
-        const windowWidth = 1016;
-        const windowHeight = 539;
+    chrome.windows.getCurrent({ populate: true }, (currentWindow) => {
+      if (!currentWindow) return;
 
-        const left =
-          currentWindow.left +
-          Math.floor((currentWindow.width - windowWidth) / 2);
-        const top =
-          currentWindow.top +
-          Math.floor((currentWindow.height - windowHeight) / 2);
+      const windowWidth = 1016;
+      const windowHeight = 539;
 
-        chrome.windows.create(
-          {
-            url: "index.html?context=autoPopup",
-            type: "popup",
-            width: windowWidth,
-            height: windowHeight,
-            left: left,
-            top: top,
-          },
-          async (window) => {
-            popupWindowId = window?.id || null;
+      const left =
+        currentWindow.left +
+        Math.floor((currentWindow.width - windowWidth) / 2);
+      const top =
+        currentWindow.top +
+        Math.floor((currentWindow.height - windowHeight) / 2);
+
+      chrome.windows.create(
+        {
+          url: "index.html?context=autoPopup",
+          type: "popup",
+          width: windowWidth,
+          height: windowHeight,
+          left,
+          top,
+        },
+        async (window) => {
+          if (window) {
+            popupWindowId = window.id;
             await chrome.storage.local.set({ autoPopupEnabledUrl: tab.url });
           }
-        );
-      });
-    }
+        }
+      );
+    });
+  } catch (error) {
+    console.error("Error in startNewWindowAutoPopup:", error);
+  }
+}
+
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+  if (
+    changeInfo.status !== "complete" ||
+    !tab?.url ||
+    tab.url.startsWith("chrome")
+  ) {
+    return;
+  }
+
+  try {
+    lastActiveTab = tab;
+    await chrome.storage.local.set({ lastActiveTab });
+    await closeExistingPopup();
+    await startNewWindowAutoPopup(tab);
+  } catch (error) {
+    console.error("Error in onUpdated listener:", error);
   }
 });
 
@@ -129,11 +168,15 @@ async function getAuthDataSetWsCon() {
 }
 
 async function handlePageReload() {
+  console.log("popupWindowId", popupWindowId);
   if (!popupWindowId) return;
 
-  await chrome.windows.remove(popupWindowId, () => {
-    popupWindowId = null;
-  });
+  await closeExistingPopup();
+
+  // await chrome.windows.remove(popupWindowId, (w) => {
+  //   // debugger
+  //   // popupWindowId = null;
+  // });
 }
 
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
@@ -141,7 +184,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
 
   switch (request.action) {
     case "appPageReloaded":
-      handlePageReload();
+      await handlePageReload();
       break;
 
     case "popupWindowClosed":
