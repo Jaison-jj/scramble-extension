@@ -170,13 +170,7 @@ async function getAuthDataSetWsCon() {
 async function handlePageReload() {
   console.log("popupWindowId", popupWindowId);
   if (!popupWindowId) return;
-
   await closeExistingPopup();
-
-  // await chrome.windows.remove(popupWindowId, (w) => {
-  //   // debugger
-  //   // popupWindowId = null;
-  // });
 }
 
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
@@ -425,8 +419,6 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === "timerAlarm") {
     console.log("Timer finished!");
     // const creds = await fetchCredentials(lastActiveTab?.url);
-
-    // set the password to refreshPassword and send it to the popup.
     // await chrome.runtime.sendMessage({
     //   action: "hideLoaderShowCredentials",
     //   user: creds.user || { userName: null, password: null },
@@ -435,7 +427,6 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
 
   if (alarm.name === "myAlarm") {
     console.log("Alarm triggered! Time's up!");
-    // Perform some action here, like sending a notification
     // await chrome.notifications.create({
     //   type: "basic",
     //   iconUrl: "assets/images/online48.png",
